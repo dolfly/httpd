@@ -69,6 +69,8 @@ APR_HOOK_STRUCT(
     APR_HOOK_LINK(auth_checker)
     APR_HOOK_LINK(insert_filter)
     APR_HOOK_LINK(create_request)
+    APR_HOOK_LINK(post_perdir_config)
+    APR_HOOK_LINK(dirwalk_stat)
 )
 
 AP_IMPLEMENT_HOOK_RUN_FIRST(int,translate_name,
@@ -90,6 +92,11 @@ AP_IMPLEMENT_HOOK_RUN_FIRST(int,auth_checker,
 AP_IMPLEMENT_HOOK_VOID(insert_filter, (request_rec *r), (r))
 AP_IMPLEMENT_HOOK_RUN_ALL(int, create_request,
                           (request_rec *r), (r), OK, DECLINED)
+AP_IMPLEMENT_HOOK_RUN_ALL(int, post_perdir_config,
+                          (request_rec *r), (r), OK, DECLINED)
+AP_IMPLEMENT_HOOK_RUN_FIRST(apr_status_t,dirwalk_stat,
+                            (apr_finfo_t *finfo, request_rec *r, apr_int32_t wanted),
+                            (finfo, r, wanted), AP_DECLINED)
 
 static int auth_internal_per_conf = 0;
 static int auth_internal_per_conf_hooks = 0;
@@ -158,9 +165,11 @@ AP_DECLARE(int) ap_process_request_internal(request_rec *r)
             return access_status;
         }
 
-        d = ap_get_core_module_config(r->per_dir_config);
-        if (d->log) {
-            r->log = d->log;
+        /* Don't set per-dir loglevel if LogLevelOverride is set */
+        if (!r->connection->log) {
+            d = ap_get_core_module_config(r->per_dir_config);
+            if (d->log)
+                r->log = d->log;
         }
 
         if ((access_status = ap_run_translate_name(r))) {
@@ -186,9 +195,15 @@ AP_DECLARE(int) ap_process_request_internal(request_rec *r)
         return access_status;
     }
 
-    d = ap_get_core_module_config(r->per_dir_config);
-    if (d->log) {
-        r->log = d->log;
+    /* Don't set per-dir loglevel if LogLevelOverride is set */
+    if (!r->connection->log) {
+        d = ap_get_core_module_config(r->per_dir_config);
+        if (d->log)
+            r->log = d->log;
+    }
+
+    if ((access_status = ap_run_post_perdir_config(r))) {
+        return access_status;
     }
 
     /* Only on the main request! */
@@ -602,7 +617,7 @@ AP_DECLARE(int) ap_directory_walk(request_rec *r)
      * with APR_ENOENT, knowing that the path is good.
      */
     if (r->finfo.filetype == APR_NOFILE || r->finfo.filetype == APR_LNK) {
-        rv = apr_stat(&r->finfo, r->filename, APR_FINFO_MIN, r->pool);
+        rv = ap_run_dirwalk_stat(&r->finfo, r, APR_FINFO_MIN);
 
         /* some OSs will return APR_SUCCESS/APR_REG if we stat
          * a regular file but we have '/' at the end of the name;
@@ -668,9 +683,8 @@ AP_DECLARE(int) ap_directory_walk(request_rec *r)
              * check.
              */
             if (!(opts & OPT_SYM_LINKS)) {
-                rv = apr_stat(&thisinfo, r->filename,
-                              APR_FINFO_MIN | APR_FINFO_NAME | APR_FINFO_LINK,
-                              r->pool);
+                rv = ap_run_dirwalk_stat(&thisinfo, r,
+                                         APR_FINFO_MIN | APR_FINFO_NAME | APR_FINFO_LINK);
                 /*
                  * APR_INCOMPLETE is as fine as result as APR_SUCCESS as we
                  * have added APR_FINFO_NAME to the wanted parameter of
@@ -754,7 +768,7 @@ AP_DECLARE(int) ap_directory_walk(request_rec *r)
 
         /* Set aside path_info to merge back onto path_info later.
          * If r->filename is a directory, we must remerge the path_info,
-         * before we continue!  [Directories cannot, by defintion, have
+         * before we continue!  [Directories cannot, by definition, have
          * path info.  Either the next segment is not-found, or a file.]
          *
          * r->path_info tracks the unconsumed source path.
@@ -1085,9 +1099,8 @@ AP_DECLARE(int) ap_directory_walk(request_rec *r)
              * the name of its target, if we are fixing the filename
              * case/resolving aliases.
              */
-            rv = apr_stat(&thisinfo, r->filename,
-                          APR_FINFO_MIN | APR_FINFO_NAME | APR_FINFO_LINK,
-                          r->pool);
+            rv = ap_run_dirwalk_stat(&thisinfo, r,
+                                     APR_FINFO_MIN | APR_FINFO_NAME | APR_FINFO_LINK);
 
             if (APR_STATUS_IS_ENOENT(rv)) {
                 /* Nothing?  That could be nice.  But our directory
@@ -2153,7 +2166,7 @@ AP_DECLARE(request_rec *) ap_sub_req_lookup_dirent(const apr_finfo_t *dirent,
     }
 
     if (rnew->finfo.filetype == APR_DIR) {
-        /* ap_make_full_path overallocated the buffers
+        /* ap_make_full_path and ap_escape_uri overallocated the buffers
          * by one character to help us out here.
          */
         strcat(rnew->filename, "/");

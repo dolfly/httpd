@@ -13,17 +13,20 @@ cache_storage.lo dnl
 cache_util.lo dnl
 "
 cache_disk_objs="mod_cache_disk.lo"
+cache_socache_objs="mod_cache_socache.lo"
 
 case "$host" in
   *os2*)
     # OS/2 DLLs must resolve all symbols at build time
     # and we need some from main cache module
     cache_disk_objs="$cache_disk_objs mod_cache.la"
+    cache_socache_objs="$cache_socache_objs mod_cache.la"
     ;;
 esac
 
 APACHE_MODULE(cache, dynamic file caching.  At least one storage management module (e.g. mod_cache_disk) is also necessary., $cache_objs, , most)
 APACHE_MODULE(cache_disk, disk caching module, $cache_disk_objs, , most, , cache)
+APACHE_MODULE(cache_socache, shared object caching module, $cache_socache_objs, , most)
 
 dnl
 dnl APACHE_CHECK_DISTCACHE
@@ -42,7 +45,7 @@ if test "x$ap_distcache_configured" = "x"; then
 
   dnl Determine the distcache base directory, if any
   AC_MSG_CHECKING([for user-provided distcache base])
-  AC_ARG_WITH(distcache, APACHE_HELP_STRING(--with-distcache=DIR, Distcache installation directory), [
+  AC_ARG_WITH(distcache, APACHE_HELP_STRING(--with-distcache=PATH, Distcache installation directory), [
     dnl If --with-distcache specifies a directory, we use that directory or fail
     if test "x$withval" != "xyes" -a "x$withval" != "x"; then
       dnl This ensures $withval is actually a directory and that it is absolute
@@ -63,7 +66,7 @@ if test "x$ap_distcache_configured" = "x"; then
 
   if test "x$ap_distcache_base" != "x"; then
     APR_ADDTO(CPPFLAGS, [-I$ap_distcache_base/include])
-    APR_ADDTO(INCLUDES, [-I$ap_distcache_base/include])
+    APR_ADDTO(MOD_INCLUDES, [-I$ap_distcache_base/include])
     APR_ADDTO(LDFLAGS, [-L$ap_distcache_base/lib])
     APR_ADDTO(ap_distcache_ldflags, [-L$ap_distcache_base/lib])
     if test "x$ap_platform_runtime_link_flag" != "x"; then

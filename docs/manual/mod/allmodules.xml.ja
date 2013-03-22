@@ -6,6 +6,7 @@
   <modulefile>mod_access_compat.xml.ja</modulefile>
   <modulefile>mod_actions.xml.ja</modulefile>
   <modulefile>mod_alias.xml.ja</modulefile>
+  <modulefile>mod_allowhandlers.xml</modulefile>
   <modulefile>mod_allowmethods.xml</modulefile>
   <modulefile>mod_asis.xml.ja</modulefile>
   <modulefile>mod_auth_basic.xml.ja</modulefile>
@@ -69,6 +70,7 @@
   <modulefile>mod_log_forensic.xml.ja</modulefile>
   <modulefile>mod_logio.xml.ja</modulefile>
   <modulefile>mod_lua.xml</modulefile>
+  <modulefile>mod_macro.xml</modulefile>
   <modulefile>mod_mime.xml.ja</modulefile>
   <modulefile>mod_mime_magic.xml</modulefile>
   <modulefile>mod_negotiation.xml.ja</modulefile>

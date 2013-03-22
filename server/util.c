@@ -30,6 +30,7 @@
 #include "apr.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
+#include "apr_md5.h"            /* for apr_password_validate */
 
 #define APR_WANT_STDIO
 #define APR_WANT_STRFUNC
@@ -62,6 +63,11 @@
 #ifdef HAVE_GRP_H
 #include <grp.h>
 #endif
+#ifdef HAVE_SYS_LOADAVG_H
+#include <sys/loadavg.h>
+#endif
+
+#include "ap_mpm.h"
 
 /* A bunch of functions in util.c scan strings looking for certain characters.
  * To make that more efficient we encode a lookup table.  The test_char_table
@@ -747,7 +753,7 @@ AP_DECLARE(char *) ap_getword_nulls(apr_pool_t *atrans, const char **line,
 static char *substring_conf(apr_pool_t *p, const char *start, int len,
                             char quote)
 {
-    char *result = apr_palloc(p, len + 2);
+    char *result = apr_palloc(p, len + 1);
     char *resp = result;
     int i;
 
@@ -778,7 +784,7 @@ AP_DECLARE(char *) ap_getword_conf(apr_pool_t *p, const char **line)
     char *res;
     char quote;
 
-    while (*str && apr_isspace(*str))
+    while (apr_isspace(*str))
         ++str;
 
     if (!*str) {
@@ -810,7 +816,7 @@ AP_DECLARE(char *) ap_getword_conf(apr_pool_t *p, const char **line)
         res = substring_conf(p, str, strend - str, 0);
     }
 
-    while (*strend && apr_isspace(*strend))
+    while (apr_isspace(*strend))
         ++strend;
     *line = strend;
     return res;
@@ -1400,7 +1406,7 @@ AP_DECLARE(char *) ap_get_token(apr_pool_t *p, const char **accept_line,
 
     /* Find first non-white byte */
 
-    while (*ptr && apr_isspace(*ptr))
+    while (apr_isspace(*ptr))
         ++ptr;
 
     tok_start = ptr;
@@ -1422,7 +1428,7 @@ AP_DECLARE(char *) ap_get_token(apr_pool_t *p, const char **accept_line,
 
     /* Advance accept_line pointer to the next non-white byte */
 
-    while (*ptr && apr_isspace(*ptr))
+    while (apr_isspace(*ptr))
         ++ptr;
 
     *accept_line = ptr;
@@ -1953,6 +1959,28 @@ AP_DECLARE(apr_size_t) ap_escape_errorlog_item(char *dest, const char *source,
     return (d - (unsigned char *)dest);
 }
 
+AP_DECLARE(void) ap_bin2hex(const void *src, apr_size_t srclen, char *dest)
+{
+    const unsigned char *in = src;
+    apr_size_t i;
+
+    for (i = 0; i < srclen; i++) {
+        *dest++ = c2x_table[in[i] >> 4];
+        *dest++ = c2x_table[in[i] & 0xf];
+    }
+    *dest = '\0';
+}
+
+AP_DECLARE(int) ap_has_cntrl(const char *str)
+{
+    while (*str) {
+        if (apr_iscntrl(*str))
+            return 1;
+        str++;
+    }
+    return 0;
+}
+
 AP_DECLARE(int) ap_is_directory(apr_pool_t *p, const char *path)
 {
     apr_finfo_t finfo;
@@ -2406,7 +2434,7 @@ AP_DECLARE(int) ap_parse_form_data(request_rec *r, ap_filter_t *f,
 
     /* sanity check - we only support forms for now */
     ct = apr_table_get(r->headers_in, "Content-Type");
-    if (!ct || strcmp("application/x-www-form-urlencoded", ct)) {
+    if (!ct || strncasecmp("application/x-www-form-urlencoded", ct, 33)) {
         return ap_discard_request_body(r);
     }
 
@@ -2787,4 +2815,166 @@ AP_DECLARE(void *) ap_realloc(void *ptr, size_t size)
     if (p == NULL && size != 0)
         ap_abort_on_oom();
     return p;
+}
+
+AP_DECLARE(void) ap_get_sload(ap_sload_t *ld)
+{
+    int i, j, server_limit, thread_limit;
+    int ready = 0;
+    int busy = 0;
+    int total;
+    ap_generation_t mpm_generation;
+
+    /* preload errored fields, we overwrite */
+    ld->idle = -1;
+    ld->busy = -1;
+    ld->bytes_served = 0;
+    ld->access_count = 0;
+
+    ap_mpm_query(AP_MPMQ_GENERATION, &mpm_generation);
+    ap_mpm_query(AP_MPMQ_HARD_LIMIT_THREADS, &thread_limit);
+    ap_mpm_query(AP_MPMQ_HARD_LIMIT_DAEMONS, &server_limit);
+
+    for (i = 0; i < server_limit; i++) {
+        process_score *ps;
+        ps = ap_get_scoreboard_process(i);
+
+        for (j = 0; j < thread_limit; j++) {
+            int res;
+            worker_score *ws = NULL;
+            ws = &ap_scoreboard_image->servers[i][j];
+            res = ws->status;
+
+            if (!ps->quiescing && ps->pid) {
+                if (res == SERVER_READY && ps->generation == mpm_generation) {
+                    ready++;
+                }
+                else if (res != SERVER_DEAD &&
+                         res != SERVER_STARTING && res != SERVER_IDLE_KILL &&
+                         ps->generation == mpm_generation) {
+                    busy++;
+                }   
+            }
+
+            if (ap_extended_status && !ps->quiescing && ps->pid) {
+                if (ws->access_count != 0 
+                    || (res != SERVER_READY && res != SERVER_DEAD)) {
+                    ld->access_count += ws->access_count;
+                    ld->bytes_served += ws->bytes_served;
+                }
+            }
+        }
+    }
+    total = busy + ready;
+    if (total) {
+        ld->idle = ready * 100 / total;
+        ld->busy = busy * 100 / total;
+    }
+}
+
+AP_DECLARE(void) ap_get_loadavg(ap_loadavg_t *ld)
+{
+    /* preload errored fields, we overwrite */
+    ld->loadavg = -1.0;
+    ld->loadavg5 = -1.0;
+    ld->loadavg15 = -1.0;
+
+#if HAVE_GETLOADAVG
+    {
+        double la[3];
+        int num;
+
+        num = getloadavg(la, 3);
+        if (num > 0) {
+            ld->loadavg = (float)la[0];
+        }
+        if (num > 1) {
+            ld->loadavg5 = (float)la[1];
+        }
+        if (num > 2) {
+            ld->loadavg15 = (float)la[2];
+        }
+    }
+#endif
+}
+
+static const char * const pw_cache_note_name = "conn_cache_note";
+struct pw_cache {
+    /* varbuf contains concatenated password and hash */
+    struct ap_varbuf vb;
+    apr_size_t pwlen;
+    apr_status_t result;
+};
+
+AP_DECLARE(apr_status_t) ap_password_validate(request_rec *r,
+                                              const char *username,
+                                              const char *passwd,
+                                              const char *hash)
+{
+    struct pw_cache *cache;
+    apr_size_t hashlen;
+
+    cache = (struct pw_cache *)apr_table_get(r->connection->notes, pw_cache_note_name);
+    if (cache != NULL) {
+        if (strncmp(passwd, cache->vb.buf, cache->pwlen) == 0
+            && strcmp(hash, cache->vb.buf + cache->pwlen) == 0) {
+            return cache->result;
+        }
+        /* make ap_varbuf_grow below not copy the old data */
+        cache->vb.strlen = 0;
+    }
+    else {
+        cache = apr_palloc(r->connection->pool, sizeof(struct pw_cache));
+        ap_varbuf_init(r->connection->pool, &cache->vb, 0);
+        apr_table_setn(r->connection->notes, pw_cache_note_name, (void *)cache);
+    }
+    cache->pwlen = strlen(passwd);
+    hashlen = strlen(hash);
+    ap_varbuf_grow(&cache->vb, cache->pwlen + hashlen + 1);
+    memcpy(cache->vb.buf, passwd, cache->pwlen);
+    memcpy(cache->vb.buf + cache->pwlen, hash, hashlen + 1);
+    cache->result = apr_password_validate(passwd, hash);
+    return cache->result;
+}
+
+AP_DECLARE(char *) ap_get_exec_line(apr_pool_t *p,
+                                    const char *cmd,
+                                    const char * const * argv)
+{
+    static char buf[MAX_STRING_LEN];
+    apr_procattr_t *procattr;
+    apr_proc_t *proc;
+    apr_file_t *fp;
+    apr_size_t nbytes = 1;
+    char c;
+    int k;
+
+    if (apr_procattr_create(&procattr, p) != APR_SUCCESS)
+        return NULL;
+    if (apr_procattr_io_set(procattr, APR_FULL_BLOCK, APR_FULL_BLOCK,
+                            APR_FULL_BLOCK) != APR_SUCCESS)
+        return NULL;
+    if (apr_procattr_dir_set(procattr,
+                             ap_make_dirstr_parent(p, cmd)) != APR_SUCCESS)
+        return NULL;
+    if (apr_procattr_cmdtype_set(procattr, APR_PROGRAM) != APR_SUCCESS)
+        return NULL;
+    proc = apr_pcalloc(p, sizeof(apr_proc_t));
+    if (apr_proc_create(proc, cmd, argv, NULL, procattr, p) != APR_SUCCESS)
+        return NULL;
+    fp = proc->out;
+
+    if (fp == NULL)
+        return NULL;
+    /* XXX: we are reading 1 byte at a time here */
+    for (k = 0; apr_file_read(fp, &c, &nbytes) == APR_SUCCESS
+                && nbytes == 1 && (k < MAX_STRING_LEN-1)     ; ) {
+        if (c == '\n' || c == '\r')
+            break;
+        buf[k++] = c;
+    }
+    buf[k] = '\0'; 
+    apr_file_close(fp);
+
+    return buf;
 }

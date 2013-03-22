@@ -169,6 +169,7 @@ TARGET_nlm = \
 	$(OBJDIR)/authzdbm.nlm \
 	$(OBJDIR)/authzgrp.nlm \
 	$(OBJDIR)/authzusr.nlm \
+	$(OBJDIR)/allowhandlers.nlm \
 	$(OBJDIR)/allowmethods.nlm \
 	$(OBJDIR)/accesscompat.nlm \
 	$(EOLIST)

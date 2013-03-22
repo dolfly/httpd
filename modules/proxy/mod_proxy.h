@@ -178,6 +178,11 @@ typedef struct {
     unsigned int proxy_status_set:1;
     unsigned int source_address_set:1;
     unsigned int bgrowth_set:1;
+    unsigned int bal_persist:1;
+    unsigned int inherit:1;
+    unsigned int inherit_set:1;
+    unsigned int ppinherit:1;
+    unsigned int ppinherit_set:1;
 } proxy_server_conf;
 
 
@@ -231,6 +236,7 @@ typedef struct {
                                 * that is used over the backend connection. */
     proxy_worker *worker;      /* Connection pool this connection belongs to */
     apr_pool_t   *pool;        /* Subpool for hostname and addr data */
+    const char   *uds_path;    /* Unix domain socket path */
     const char   *hostname;
     apr_sockaddr_t *addr;      /* Preparsed remote address info */
     apr_pool_t   *scpool;      /* Subpool used for socket and connection data */
@@ -425,6 +431,7 @@ typedef struct {
     unsigned int    vhosted:1;
     unsigned int    inactive:1;
     unsigned int    forcerecovery:1;
+    char      sticky_separator;                                /* separator for sessionid/route */
 } proxy_balancer_shared;
 
 #define ALIGNED_PROXY_BALANCER_SHARED_SIZE (APR_ALIGN_DEFAULT(sizeof(proxy_balancer_shared)))
@@ -702,6 +709,32 @@ PROXY_DECLARE(apr_status_t) ap_proxy_initialize_balancer(proxy_balancer *balance
                                                          apr_pool_t *p);
 
 /**
+ * Find the shm of the worker as needed
+ * @param storage slotmem provider
+ * @param slot    slotmem instance
+ * @param worker  worker to find
+ * @param index   pointer to index within slotmem of worker
+ * @return        pointer to shm of worker, or NULL
+ */
+PROXY_DECLARE(proxy_worker_shared *) ap_proxy_find_workershm(ap_slotmem_provider_t *storage,
+                                                             ap_slotmem_instance_t *slot,
+                                                             proxy_worker *worker,
+                                                             unsigned int *index);
+
+/**
+ * Find the shm of the balancer as needed
+ * @param storage slotmem provider
+ * @param slot    slotmem instance
+ * @param worker  worker to find
+ * @param index   pointer to index within slotmem of balancer
+ * @return        pointer to shm of balancer, or NULL
+ */
+PROXY_DECLARE(proxy_balancer_shared *) ap_proxy_find_balancershm(ap_slotmem_provider_t *storage,
+                                                                 ap_slotmem_instance_t *slot,
+                                                                 proxy_balancer *balancer,
+                                                                 unsigned int *index);
+
+/**
  * Get the most suitable worker and/or balancer for the request
  * @param worker   worker used for processing request
  * @param balancer balancer used for processing request
@@ -886,6 +919,46 @@ PROXY_DECLARE(apr_status_t) ap_proxy_sync_balancer(proxy_balancer *b,
 PROXY_DECLARE(int) ap_proxy_trans_match(request_rec *r,
                                         struct proxy_alias *ent,
                                         proxy_dir_conf *dconf);
+
+/**
+ * Create a HTTP request header brigade,  old_cl_val and old_te_val as required.
+ * @parama p              pool
+ * @param header_brigade  header brigade to use/fill
+ * @param r               request
+ * @param p_conn          proxy connection rec
+ * @param worker          selected worker
+ * @param conf            per-server proxy config
+ * @param uri             uri
+ * @param url             url
+ * @param server_portstr  port as string
+ * @param old_cl_val      stored old content-len val
+ * @param old_te_val      stored old TE val
+ * @return                OK or HTTP_EXPECTATION_FAILED
+ */
+PROXY_DECLARE(int) ap_proxy_create_hdrbrgd(apr_pool_t *p,
+                                           apr_bucket_brigade *header_brigade,
+                                           request_rec *r,
+                                           proxy_conn_rec *p_conn,
+                                           proxy_worker *worker,
+                                           proxy_server_conf *conf,
+                                           apr_uri_t *uri,
+                                           char *url, char *server_portstr,
+                                           char **old_cl_val,
+                                           char **old_te_val);
+
+/**
+ * @param bucket_alloc  bucket allocator
+ * @param r             request
+ * @param p_conn        proxy connection
+ * @param origin        connection rec of origin
+ * @param  bb           brigade to send to origin
+ * @param  flush        flush
+ * @return              status (OK)
+ */
+PROXY_DECLARE(int) ap_proxy_pass_brigade(apr_bucket_alloc_t *bucket_alloc,
+                                         request_rec *r, proxy_conn_rec *p_conn,
+                                         conn_rec *origin, apr_bucket_brigade *bb,
+                                         int flush);
 
 #define PROXY_LBMETHOD "proxylbmethod"
 

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE modulesynopsis SYSTEM "../style/modulesynopsis.dtd">
 <?xml-stylesheet type="text/xsl" href="../style/manual.fr.xsl"?>
-<!-- English Revision : 1336869 -->
+<!-- English Revision : 1421821 -->
 <!-- French translation : Lucien GENTIS -->
 <!-- Reviewed by : Vincent Deffontaines -->
 
@@ -30,8 +30,6 @@ texte</description>
 <status>Base</status>
 <sourcefile>mod_authn_file.c</sourcefile>
 <identifier>authn_file_module</identifier>
-<compatibility>Disponible depuis les versions 2.1 et sup&eacute;rieures
-d'Apache</compatibility>
 
 <summary>
     <p>Ce module permet aux frontaux d'authentification comme

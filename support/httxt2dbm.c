@@ -138,7 +138,7 @@ static apr_status_t to_dbm(apr_dbm_t *dbm, apr_file_t *fp, apr_pool_t *pool)
         dbmkey.dptr = apr_pstrmemdup(p, line,  c - line);
         dbmkey.dsize = (c - line);
 
-        while (*c && apr_isspace(*c)) {
+        while (apr_isspace(*c)) {
             ++c;
         }
 
@@ -154,7 +154,7 @@ static apr_status_t to_dbm(apr_dbm_t *dbm, apr_file_t *fp, apr_pool_t *pool)
         }
 
         dbmval.dptr = apr_pstrmemdup(p, value,  c - value);
-        dbmval.dsize = (c - line);
+        dbmval.dsize = (c - value);
 
         if (verbose) {
             apr_file_printf(errfile, "    '%s' -> '%s'"NL,

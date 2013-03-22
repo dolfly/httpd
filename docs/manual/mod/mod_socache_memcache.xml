@@ -26,7 +26,7 @@
 <description>Memcache based shared object cache provider.</description>
 <status>Extension</status>
 <sourcefile>mod_socache_memcache.c</sourcefile>
-<identifier>mod_socache_memcache_module</identifier>
+<identifier>socache_memcache_module</identifier>
 
 <summary>
     <p><code>mod_socache_memcache</code> is a shared object cache provider
@@ -35,6 +35,17 @@
     high-performance, distributed memory object caching system.
     </p>
 
+ 
+    <p>This shared object cache provider's "create" method requies a 
+       comma separated list of memcached host/port specifications. If using
+       this provider via another modules configuration (such as 
+       <directive module="mod_ssl">SSLSessionCache</directive>), provide
+       the list of servers as the optional "arg" parameter.</p>
+
+     <example>
+         SSLSessionCache memcache:memcache.example.com:12345,memcache2.example.com:123455
+     </example>
+      
     <p>Details of other shared object cache providers can be found
     <a href="../socache.html">here</a>.
     </p>

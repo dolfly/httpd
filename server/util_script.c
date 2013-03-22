@@ -73,9 +73,10 @@ static char *http2env(request_rec *r, const char *w)
             *cp++ = '_';
         }
         else {
-            ap_log_rerror(APLOG_MARK, APLOG_TRACE1, 0, r,
-                          "Not exporting header with invalid name as envvar: %s",
-                          ap_escape_logitem(r->pool, w));
+            if (APLOGrtrace1(r))
+                ap_log_rerror(APLOG_MARK, APLOG_TRACE1, 0, r,
+                            "Not exporting header with invalid name as envvar: %s",
+                            ap_escape_logitem(r->pool, w));
             return NULL;
         }
     }
@@ -122,7 +123,7 @@ AP_DECLARE(char **) ap_create_environment(apr_pool_t *p, apr_table_t *t)
             *whack++ = '_';
         }
         while (*whack != '=') {
-            if (!apr_isalnum(*whack) && *whack != '_') {
+            if (!apr_isalnum(*whack)) {
                 *whack = '_';
             }
             ++whack;
@@ -565,7 +566,7 @@ AP_DECLARE(int) ap_scan_script_header_err_core_ex(request_rec *r, char *buffer,
         }
 
         *l++ = '\0';
-        while (*l && apr_isspace(*l)) {
+        while (apr_isspace(*l)) {
             ++l;
         }
 
@@ -591,12 +592,13 @@ AP_DECLARE(int) ap_scan_script_header_err_core_ex(request_rec *r, char *buffer,
             r->status = cgi_status = atoi(l);
             if (!ap_is_HTTP_VALID_RESPONSE(cgi_status))
                 ap_log_rerror(SCRIPT_LOG_MARK, APLOG_ERR|APLOG_TOCLIENT, 0, r,
-                              "Invalid status line from script '%s': %s",
+                              "Invalid status line from script '%s': %.30s",
                               apr_filepath_name_get(r->filename), l);
             else
-                ap_log_rerror(SCRIPT_LOG_MARK, APLOG_TRACE1, 0, r,
-                              "Status line from script '%s': %s",
-                              apr_filepath_name_get(r->filename), l);
+                if (APLOGrtrace1(r))
+                   ap_log_rerror(SCRIPT_LOG_MARK, APLOG_TRACE1, 0, r,
+                                 "Status line from script '%s': %.30s",
+                                 apr_filepath_name_get(r->filename), l);
             r->status_line = apr_pstrdup(r->pool, l);
         }
         else if (!strcasecmp(w, "Location")) {

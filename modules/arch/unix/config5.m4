@@ -4,6 +4,7 @@ APACHE_MODPATH_INIT(arch/unix)
 if ap_mpm_is_enabled "simple" \
    || ap_mpm_is_enabled "worker" \
    || ap_mpm_is_enabled "event" \
+   || ap_mpm_is_enabled "eventopt" \
    || ap_mpm_is_enabled "prefork"; then
     unixd_mods_enable=yes
 else
@@ -16,6 +17,18 @@ APACHE_MODULE(privileges, Per-virtualhost Unix UserIDs and enhanced security for
   if test $ap_HAVE_PRIV_H = "no"; then
     AC_MSG_WARN([Your system does not support privileges.])
     enable_privileges="no"
+  fi
+])
+
+APACHE_MODULE(systemd, Systemd support, , , all, [
+  AC_CHECK_LIB(systemd-daemon, sd_notify, SYSTEMD_LIBS="-lsystemd-daemon")
+  AC_CHECK_HEADERS(systemd/sd-daemon.h, [ap_HAVE_SD_DAEMON_H="yes"], [ap_HAVE_SD_DAEMON_H="no"])
+  if test $ap_HAVE_SD_DAEMON_H = "no" || test -z "${SYSTEMD_LIBS}"; then
+    AC_MSG_WARN([Your system does not support systemd.])
+    enable_systemd="no"
+  else
+    APR_ADDTO(MOD_SYSTEMD_LDADD, [$SYSTEMD_LIBS])
+    enable_systemd="yes"
   fi
 ])
 

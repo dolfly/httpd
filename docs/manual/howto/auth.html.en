@@ -14,7 +14,7 @@
 
 <link href="../images/favicon.ico" rel="shortcut icon" /></head>
 <body id="manual-page"><div id="page-header">
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
 <p class="apache">Apache HTTP Server Version 2.5</p>
 <img alt="" src="../images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div>
@@ -266,7 +266,7 @@ Require user rbowen
     file to authenticate the user on each request. Apache also has
     the ability to store user information in fast database files.
     The <code class="module"><a href="../mod/mod_authn_dbm.html">mod_authn_dbm</a></code> module provides the <code class="directive"><a href="../mod/mod_authn_dbm.html#authdbmuserfile">AuthDBMUserFile</a></code> directive. These
-    files can be created and manipulated with the <code class="program"><a href="../programs/dbmmanage.html">dbmmanage</a></code> program. Many
+    files can be created and manipulated with the <code class="program"><a href="../programs/dbmmanage.html">dbmmanage</a></code> and <code class="program"><a href="../programs/htdbm.html">htdbm</a></code> programs. Many
     other types of authentication options are available from third
     party modules in the <a href="http://modules.apache.org/">Apache Modules
     Database</a>.</p>
@@ -377,7 +377,7 @@ Require group GroupName
     you can choose <code>dbm</code> or <code>dbd</code> as your storage
     format.</p>
 
-    <p>To select a dbd file rather than a text file, for example:</p>
+    <p>To select a dbm file rather than a text file, for example:</p>
 
     <pre class="prettyprint lang-config">
 &lt;Directory /www/docs/private&gt;
@@ -568,11 +568,10 @@ Require group GroupName
         </pre>
 
 
-        <p>The above example uses the <code class="directive"><a href="../mod/mod_authz_core.html#requirenone">&lt;RequireNone&gt;</a></code> directive
-        to make sure that none of the
-        <code class="directive"><a href="../mod/mod_authz_core.html#require">Require</a></code> directives
-        contained within it
-        match their parameters before granting access.</p>
+        <p>Using <code class="directive"><a href="../mod/mod_authz_core.html#requireall">&lt;RequireAll&gt;</a></code>
+        with multiple <code class="directive"><a href="../mod/mod_authz_core.html#require">&lt;Require&gt;</a></code> directives, each negated with <code>not</code>,
+        will only allow access, if all of negated conditions are true. In other words,
+        access will be blocked, if any of the negated conditions fails.</p>
 
     
 
@@ -638,8 +637,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/howto/auth.html';
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

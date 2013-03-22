@@ -15,7 +15,7 @@
 <link href="../images/favicon.ico" rel="shortcut icon" /></head>
 <body>
 <div id="page-header">
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
 <p class="apache">Apache HTTP Server Version 2.5</p>
 <img alt="" src="../images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div>
@@ -85,6 +85,7 @@ available</td></tr>
 <li><img alt="" src="../images/down.gif" /> <a href="#location">&lt;Location&gt;</a></li>
 <li><img alt="" src="../images/down.gif" /> <a href="#locationmatch">&lt;LocationMatch&gt;</a></li>
 <li><img alt="" src="../images/down.gif" /> <a href="#loglevel">LogLevel</a></li>
+<li><img alt="" src="../images/down.gif" /> <a href="#logleveloverride">LogLevelOverride</a></li>
 <li><img alt="" src="../images/down.gif" /> <a href="#maxkeepaliverequests">MaxKeepAliveRequests</a></li>
 <li><img alt="" src="../images/down.gif" /> <a href="#maxrangeoverlaps">MaxRangeOverlaps</a></li>
 <li><img alt="" src="../images/down.gif" /> <a href="#maxrangereversals">MaxRangeReversals</a></li>
@@ -93,6 +94,7 @@ available</td></tr>
 <li><img alt="" src="../images/down.gif" /> <a href="#namevirtualhost">NameVirtualHost</a></li>
 <li><img alt="" src="../images/down.gif" /> <a href="#options">Options</a></li>
 <li><img alt="" src="../images/down.gif" /> <a href="#protocol">Protocol</a></li>
+<li><img alt="" src="../images/down.gif" /> <a href="#registerhttpmethod">RegisterHttpMethod</a></li>
 <li><img alt="" src="../images/down.gif" /> <a href="#rlimitcpu">RLimitCPU</a></li>
 <li><img alt="" src="../images/down.gif" /> <a href="#rlimitmem">RLimitMEM</a></li>
 <li><img alt="" src="../images/down.gif" /> <a href="#rlimitnproc">RLimitNPROC</a></li>
@@ -114,6 +116,7 @@ available</td></tr>
 <li><img alt="" src="../images/down.gif" /> <a href="#usecanonicalname">UseCanonicalName</a></li>
 <li><img alt="" src="../images/down.gif" /> <a href="#usecanonicalphysicalport">UseCanonicalPhysicalPort</a></li>
 <li><img alt="" src="../images/down.gif" /> <a href="#virtualhost">&lt;VirtualHost&gt;</a></li>
+<li><img alt="" src="../images/down.gif" /> <a href="#warning">Warning</a></li>
 </ul>
 <ul class="seealso"><li><a href="#comments_section">Comments</a></li></ul></div>
 
@@ -125,11 +128,11 @@ available</td></tr>
 <tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Available in Apache httpd 2.1.5 and later.
-On Windows from Apache httpd 2.3.3 and later.</td></tr>
+<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>On Windows only available from Apache httpd 2.3.3 and later.
+</td></tr>
 </table>
     <p>This directive enables operating system specific optimizations for a
-       listening socket by the <code class="directive">Protocol</code>type.
+       listening socket by the <code class="directive">Protocol</code> type.
        The basic premise is for the kernel to not send a socket to the server
        process until either data is received or an entire HTTP Request is buffered.
        Only <a href="http://www.freebsd.org/cgi/man.cgi?query=accept_filter&amp;sektion=9">
@@ -220,7 +223,6 @@ AcceptFilter https data
 <tr><th><a href="directive-dict.html#Override">Override:</a></th><td>FileInfo</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Available in Apache httpd 2.0.30 and later</td></tr>
 </table>
 
     <p>This directive controls whether requests that contain trailing
@@ -372,7 +374,7 @@ be passed through</td></tr>
 <tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config, virtual host</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Available in Apache httpd 2.0.46 and later.
+<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>
 NoDecode option available in 2.3.12 and later.</td></tr>
 </table>
     <p>The <code class="directive">AllowEncodedSlashes</code> directive allows URLs
@@ -462,7 +464,8 @@ NoDecode option available in 2.3.12 and later.</td></tr>
       <code class="directive"><a href="#setoutputfilter">SetOutputFilter</a></code>, and
       <code class="module"><a href="../mod/mod_mime.html">mod_mime</a></code> Add* and Remove* directives),
       document meta data (<code class="directive"><a href="../mod/mod_headers.html#header">Header</a></code>, <code class="directive"><a href="../mod/mod_headers.html#requestheader">RequestHeader</a></code>, <code class="directive"><a href="../mod/mod_setenvif.html#setenvif">SetEnvIf</a></code>, <code class="directive"><a href="../mod/mod_setenvif.html#setenvifnocase">SetEnvIfNoCase</a></code>, <code class="directive"><a href="../mod/mod_setenvif.html#browsermatch">BrowserMatch</a></code>, <code class="directive"><a href="../mod/mod_usertrack.html#cookieexpires">CookieExpires</a></code>, <code class="directive"><a href="../mod/mod_usertrack.html#cookiedomain">CookieDomain</a></code>, <code class="directive"><a href="../mod/mod_usertrack.html#cookiestyle">CookieStyle</a></code>, <code class="directive"><a href="../mod/mod_usertrack.html#cookietracking">CookieTracking</a></code>, <code class="directive"><a href="../mod/mod_usertrack.html#cookiename">CookieName</a></code>),
-      <code class="module"><a href="../mod/mod_rewrite.html">mod_rewrite</a></code> directives <code class="directive"><a href="../mod/mod_rewrite.html#rewriteengine">RewriteEngine</a></code>, <code class="directive"><a href="../mod/mod_rewrite.html#rewriteoptions">RewriteOptions</a></code>, <code class="directive"><a href="../mod/mod_rewrite.html#rewritebase">RewriteBase</a></code>, <code class="directive"><a href="../mod/mod_rewrite.html#rewritecond">RewriteCond</a></code>, <code class="directive"><a href="../mod/mod_rewrite.html#rewriterule">RewriteRule</a></code>) and
+      <code class="module"><a href="../mod/mod_rewrite.html">mod_rewrite</a></code> directives (<code class="directive"><a href="../mod/mod_rewrite.html#rewriteengine">RewriteEngine</a></code>, <code class="directive"><a href="../mod/mod_rewrite.html#rewriteoptions">RewriteOptions</a></code>, <code class="directive"><a href="../mod/mod_rewrite.html#rewritebase">RewriteBase</a></code>, <code class="directive"><a href="../mod/mod_rewrite.html#rewritecond">RewriteCond</a></code>, <code class="directive"><a href="../mod/mod_rewrite.html#rewriterule">RewriteRule</a></code>),
+      <code class="module"><a href="../mod/mod_alias.html">mod_alias</a></code> directives (<code class="directive"><a href="../mod/mod_alias.html#redirect">Redirect</a></code>, <code class="directive"><a href="../mod/mod_alias.html#redirecttemp">RedirectTemp</a></code>, <code class="directive"><a href="../mod/mod_alias.html#redirectpermanent">RedirectPermanent</a></code>, <code class="directive"><a href="../mod/mod_alias.html#redirectmatch">RedirectMatch</a></code>), and
       <code class="directive"><a href="../mod/mod_actions.html#action">Action</a></code> from
       <code class="module"><a href="../mod/mod_actions.html">mod_actions</a></code>.
       </dd>
@@ -474,13 +477,16 @@ NoDecode option available in 2.3.12 and later.</td></tr>
       (<code class="directive"><a href="../mod/mod_autoindex.html#adddescription">AddDescription</a></code>,
       <code class="directive"><a href="../mod/mod_autoindex.html#addicon">AddIcon</a></code>, <code class="directive"><a href="../mod/mod_autoindex.html#addiconbyencoding">AddIconByEncoding</a></code>,
       <code class="directive"><a href="../mod/mod_autoindex.html#addiconbytype">AddIconByType</a></code>,
-      <code class="directive"><a href="../mod/mod_autoindex.html#defaulticon">DefaultIcon</a></code>, <code class="directive"><a href="../mod/mod_dir.html#directoryindex">DirectoryIndex</a></code>, <a href="mod_autoindex.html#indexoptions.fancyindexing"><code>FancyIndexing</code></a>, <code class="directive"><a href="../mod/mod_autoindex.html#headername">HeaderName</a></code>, <code class="directive"><a href="../mod/mod_autoindex.html#indexignore">IndexIgnore</a></code>, <code class="directive"><a href="../mod/mod_autoindex.html#indexoptions">IndexOptions</a></code>, <code class="directive"><a href="../mod/mod_autoindex.html#readmename">ReadmeName</a></code>,
+      <code class="directive"><a href="../mod/mod_autoindex.html#defaulticon">DefaultIcon</a></code>, <code class="directive"><a href="../mod/mod_dir.html#directoryindex">DirectoryIndex</a></code>, , <code class="directive"><a href="../mod/mod_dir.html#fallbackresource">FallbackResource</a></code>,<a href="mod_autoindex.html#indexoptions.fancyindexing"><code>FancyIndexing</code></a>, <code class="directive"><a href="../mod/mod_autoindex.html#headername">HeaderName</a></code>, <code class="directive"><a href="../mod/mod_autoindex.html#indexignore">IndexIgnore</a></code>, <code class="directive"><a href="../mod/mod_autoindex.html#indexoptions">IndexOptions</a></code>, <code class="directive"><a href="../mod/mod_autoindex.html#readmename">ReadmeName</a></code>,
       <em>etc.</em>).</dd>
 
       <dt>Limit</dt>
 
       <dd>
       Allow use of the directives controlling host access (<code class="directive"><a href="../mod/mod_access_compat.html#allow">Allow</a></code>, <code class="directive"><a href="../mod/mod_access_compat.html#deny">Deny</a></code> and <code class="directive"><a href="../mod/mod_access_compat.html#order">Order</a></code>).</dd>
+
+
+
 
       <dt>Nonfatal=[Override|Unknown|All]</dt>
 
@@ -522,6 +528,10 @@ NoDecode option available in 2.3.12 and later.</td></tr>
          syntax.  In other words, this mechanism cannot force a specific option
          to remain <em>set</em> while allowing any others to be set.
       </p></div>
+
+      <div class="example"><p><code>
+      AllowOverride Options=Indexes,MultiViews
+      </code></p></div>
       </dd>
     </dl>
 
@@ -602,7 +612,7 @@ AllowOverrideList CookieTracking CookieName
     <p>In the example above <code class="directive"><a href="#allowoverride&#10;    ">AllowOverride
     </a></code> grants permission to the <code>AuthConfig</code>
     directive grouping and <code class="directive">AllowOverrideList</code> grants
-    permission to only two directves from the <code>FileInfo</code> directive
+    permission to only two directives from the <code>FileInfo</code> directive
     grouping. All others will cause an internal server error.</p>
 
 <h3>See also</h3>
@@ -685,7 +695,7 @@ headers</td></tr>
     <p>The <code class="directive">DefaultRuntimeDir</code> directive sets the
     directory in which the server will create various run-time files
     (shared memory, locks, etc.). If set as a relative path, the full path
-    will be relative to <code class="directive">ServerRoot</code></p>
+    will be relative to <code class="directive">ServerRoot</code>.</p>
 
     <p><strong>Example</strong></p>
    <pre class="prettyprint lang-config">
@@ -723,7 +733,8 @@ which no other media type configuration could be found.
 <tr><th><a href="directive-dict.html#Override">Override:</a></th><td>FileInfo</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>The argument <code>none</code> is available in Apache httpd 2.2.7 and later.  All other choices are DISABLED for 2.3.x and later.</td></tr>
+<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>All choices except <code>none</code> are DISABLED for 2.3.x and later.
+</td></tr>
 </table>
     <p>This directive has been disabled.  For backwards compatibility
     of configuration files, it may be specified with the value
@@ -773,6 +784,8 @@ which no other media type configuration could be found.
   Define servername www.example.com
   Define SSL
 &lt;/IfDefine&gt;
+
+DocumentRoot /var/www/${servername}/htdocs
     </pre>
 
 
@@ -1159,7 +1172,7 @@ for a complete reference and more examples.</li>
 <tr><th><a href="directive-dict.html#Override">Override:</a></th><td>FileInfo</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Available in version 2.0.44 and later. Default changed to Off in
+<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Default changed to Off in
 version 2.3.9.</td></tr>
 </table>
     <p>This directive controls whether <code class="program"><a href="../programs/httpd.html">httpd</a></code> may use the
@@ -1268,7 +1281,7 @@ in case of an error</td></tr>
 
       <li>output a customized message</li>
 
-      <li>redirect to a local <var>URL-path</var> to handle the
+      <li>internally redirect to a local <var>URL-path</var> to handle the
       problem/error</li>
 
       <li>redirect to an external <var>URL</var> to handle the
@@ -1557,7 +1570,7 @@ ErrorLogFormat "[%t] [%l] [pid %P] %F: %E: [client %a] %M"
     unique id will be used as log ID for requests.</p>
 
     <pre class="prettyprint lang-config">
-#Example (default format)
+#Example (default format for threaded MPMs)
 ErrorLogFormat "[%{u}t] [%-m:%l] [pid %P:tid %T] %7F: %E: [client\ %a] %M%&nbsp;,\&nbsp;referer\&nbsp;%{Referer}i"
     </pre>
 
@@ -1805,7 +1818,6 @@ media type in the HTTP Content-Type header field</td></tr>
 <tr><th><a href="directive-dict.html#Override">Override:</a></th><td>FileInfo</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Moved to the core in Apache httpd 2.0</td></tr>
 </table>
     <p>When placed into an <code>.htaccess</code> file or a
     <code class="directive"><a href="#directory">&lt;Directory&gt;</a></code>, or
@@ -2033,8 +2045,6 @@ presence or absence of a specific module</td></tr>
 <tr><th><a href="directive-dict.html#Override">Override:</a></th><td>All</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Module identifiers are available in version 2.1 and
-later.</td></tr>
 </table>
     <p>The <code>&lt;IfModule <var>test</var>&gt;...&lt;/IfModule&gt;</code>
     section is used to mark directives that are conditional on the presence of
@@ -2084,7 +2094,7 @@ the server configuration files</td></tr>
 <tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config, virtual host, directory</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Wildcard matching available in 2.0.41 and later, directory
+<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Directory
 wildcard matching available in 2.3.6 and later</td></tr>
 </table>
     <p>This directive allows inclusion of other configuration files
@@ -2355,7 +2365,6 @@ subrequests</td></tr>
 <tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config, virtual host</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Available in Apache httpd 2.0.47 and later</td></tr>
 </table>
     <p>An internal redirect happens, for example, when using the <code class="directive"><a href="../mod/mod_actions.html#action">Action</a></code> directive, which internally
     redirects the original request to a CGI script. A subrequest is Apache httpd's
@@ -2957,11 +2966,73 @@ LogLevel info
 
     <div class="note">
         Per directory loglevel configuration only affects messages that are
-	logged after the request has been parsed and that are associated with
-	the request. Log messages which are associated with the connection or
-	the server are not affected.
+        logged after the request has been parsed and that are associated with
+        the request. Log messages which are associated with the server or
+        the connection are not affected. The latter can be influenced by the
+        <code class="directive"><a href="#logleveloverride">LogLevelOverride</a></code> directive,
+        though.
     </div>
 
+<h3>See also</h3>
+<ul>
+<li><code class="directive"><a href="#errorlog">ErrorLog</a></code></li>
+<li><code class="directive"><a href="#errorlogformat">ErrorLogFormat</a></code></li>
+<li><code class="directive"><a href="#logleveloverride">LogLevelOverride</a></code></li>
+<li><a href="../logs.html">Apache HTTP Server Log Files</a></li>
+</ul>
+</div>
+<div class="top"><a href="#page-header"><img alt="top" src="../images/up.gif" /></a></div>
+<div class="directive-section"><h2><a name="LogLevelOverride" id="LogLevelOverride">LogLevelOverride</a> <a name="logleveloverride" id="logleveloverride">Directive</a></h2>
+<table class="directive">
+<tr><th><a href="directive-dict.html#Description">Description:</a></th><td>Override the verbosity of the ErrorLog for certain clients</td></tr>
+<tr><th><a href="directive-dict.html#Syntax">Syntax:</a></th><td><code>LogLevel <var>ipaddress</var>[/<var>prefixlen</var>]
+    [<var>module</var>:]<var>level</var> [<var>module</var>:<var>level</var>] ...
+</code></td></tr>
+<tr><th><a href="directive-dict.html#Default">Default:</a></th><td><code>unset</code></td></tr>
+<tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config, virtual host</td></tr>
+<tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
+<tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
+<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Available in Apache HTTP Server 2.5.0 and later</td></tr>
+</table>
+    <p><code class="directive">LogLevelOverride</code> adjusts the
+    <code class="directive"><a href="#loglevel">LogLevel</a></code> for requests coming from
+    certain client IP addresses.
+    This allows to enable verbose logging only for certain test clients.
+    The IP address is checked at a very early state in the connection
+    processing.  Therefore, <code class="directive">LogLevelOverride</code> allows to
+    change the log level for things like the SSL handshake which happen before
+    a <code class="directive"><a href="#loglevel">LogLevel</a></code> directive in an
+    <code class="directive"><a href="#if">&lt;If&gt;</a></code> container would
+    be evaluated.</p>
+
+    <p><code class="directive">LogLevelOverride</code> accepts either a single
+    IP-address or a CIDR IP-address/len subnet specification.
+    For the syntax of the loglevel specification, see the
+    <code class="directive"><a href="#loglevel">LogLevel</a></code> directive.</p>
+
+    <p>For requests that match a <code class="directive">LogLevelOverride</code>
+    directive, per-directory specifications of
+    <code class="directive"><a href="#loglevel">LogLevel</a></code> are ignored.</p>
+
+    <p>Examples:</p>
+
+    <pre class="prettyprint lang-config">
+        LogLevelOverride 192.0.2.0/24 ssl:trace6
+        LogLevelOverride 192.0.2.7 ssl:trace8
+    </pre>
+
+
+    <div class="note">
+        <code class="directive"><a href="#logleveloverride">LogLevelOverride</a></code> only affects
+        log messages that are associated with the request or the connection.
+        Log messages which are associated with the server not affected.
+    </div>
+
+
+<h3>See also</h3>
+<ul>
+<li><code class="directive"><a href="#loglevel">LogLevel</a></code></li>
+</ul>
 </div>
 <div class="top"><a href="#page-header"><img alt="top" src="../images/up.gif" /></a></div>
 <div class="directive-section"><h2><a name="MaxKeepAliveRequests" id="MaxKeepAliveRequests">MaxKeepAliveRequests</a> <a name="maxkeepaliverequests" id="maxkeepaliverequests">Directive</a></h2>
@@ -3001,7 +3072,7 @@ connection</td></tr>
 </table>
         <p>The <code class="directive">MaxRangeOverlaps</code> directive
             limits the number of overlapping HTTP ranges the server is willing to
-            return to the client.  If more overlapping ranges then permitted are requested,
+            return to the client. If more overlapping ranges than permitted are requested,
             the complete resource is returned instead.</p>
 
         <dl>
@@ -3035,7 +3106,7 @@ connection</td></tr>
 </table>
         <p>The <code class="directive">MaxRangeReversals</code> directive
             limits the number of HTTP Range reversals the server is willing to
-            return to the client.  If more ranges reversals then permitted are requested,
+            return to the client. If more ranges reversals than permitted are requested,
             the complete resource is returned instead.</p>
 
         <dl>
@@ -3069,7 +3140,7 @@ resource </td></tr>
 </table>
     <p>The <code class="directive">MaxRanges</code> directive
     limits the number of HTTP ranges the server is willing to
-    return to the client.  If more ranges then permitted are requested,
+    return to the client. If more ranges than permitted are requested,
     the complete resource is returned instead.</p>
 
     <dl>
@@ -3220,9 +3291,11 @@ or specified mutexes</td></tr>
 
     <p>With the file-based mechanisms <em>fcntl</em> and <em>flock</em>,
     the path, if provided, is a directory where the lock file will be created.
-    The default directory is httpd's run-time file directory relative to
-    <code class="directive"><a href="#serverroot">ServerRoot</a></code>.  Always use a local disk
-    filesystem for <code>/path/to/mutex</code> and never a directory residing
+    The default directory is httpd's run-time file directory,
+    <code class="directive"><a href="#defaultruntimedir">DefaultRuntimeDir</a></code>.  If a relative
+    path is provided, it is relative to
+    <code class="directive"><a href="#defaultruntimedir">DefaultRuntimeDir</a></code>.  Always use a local
+    disk filesystem for <code>/path/to/mutex</code> and never a directory residing
     on a NFS- or AFS-filesystem.  The basename of the file will be the mutex
     type, an optional instance string provided by the module, and unless the
     <code>OmitPID</code> keyword is specified, the process id of the httpd
@@ -3507,8 +3580,7 @@ directory</td></tr>
 <tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config, virtual host</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Available in Apache 2.1.5 and later.
-On Windows from Apache 2.3.3 and later.</td></tr>
+<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>On Windows only available from Apache 2.3.3 and later.</td></tr>
 </table>
     <p>This directive specifies the protocol used for a specific listening socket.
        The protocol is used to determine which module should handle a request, and
@@ -3529,6 +3601,23 @@ On Windows from Apache 2.3.3 and later.</td></tr>
 <li><code class="directive"><a href="#acceptfilter">AcceptFilter</a></code></li>
 <li><code class="directive"><a href="../mod/mpm_common.html#listen">Listen</a></code></li>
 </ul>
+</div>
+<div class="top"><a href="#page-header"><img alt="top" src="../images/up.gif" /></a></div>
+<div class="directive-section"><h2><a name="RegisterHttpMethod" id="RegisterHttpMethod">RegisterHttpMethod</a> <a name="registerhttpmethod" id="registerhttpmethod">Directive</a></h2>
+<table class="directive">
+<tr><th><a href="directive-dict.html#Description">Description:</a></th><td>Register non-standard HTTP methods</td></tr>
+<tr><th><a href="directive-dict.html#Syntax">Syntax:</a></th><td><code>RegisterHttpMethod <var>method</var> [<var>method</var> [...]]</code></td></tr>
+<tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config</td></tr>
+<tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
+<tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
+</table>
+<p>HTTP Methods that are not conforming to the relvant RFCs are normally
+rejected by request processing in Apache HTTPD. To avoid this, modules
+can register non-standard HTTP methods they support.
+The <code class="directive">RegisterHttpMethod</code> allows to register such
+methods manually. This can be useful for if such methods are forwared
+for external processing, e.g. to a CGI script.</p>
+
 </div>
 <div class="top"><a href="#page-header"><img alt="top" src="../images/up.gif" /></a></div>
 <div class="directive-section"><h2><a name="RLimitCPU" id="RLimitCPU">RLimitCPU</a> <a name="rlimitcpu" id="rlimitcpu">Directive</a></h2>
@@ -3657,9 +3746,7 @@ scripts</td></tr>
 <tr><th><a href="directive-dict.html#Override">Override:</a></th><td>FileInfo</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Win32 only;
-option <code>Registry-Strict</code> is available in Apache HTTP Server 2.0 and
-later</td></tr>
+<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Win32 only.</td></tr>
 </table>
     <p>This directive is used to control how Apache httpd finds the
     interpreter used to run CGI scripts. The default setting is
@@ -3717,7 +3804,6 @@ of a request or the last 63, assuming the request itself is greater than
 <tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Available in Apache httpd 2.2.7 and later.</td></tr>
 </table>
     <p>mod_status with <code>ExtendedStatus On</code>
     displays the actual request being handled.
@@ -4067,7 +4153,6 @@ handler</td></tr>
 <tr><th><a href="directive-dict.html#Override">Override:</a></th><td>FileInfo</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Moved into the core in Apache httpd 2.0</td></tr>
 </table>
     <p>When placed into an <code>.htaccess</code> file or a
     <code class="directive"><a href="#directory">&lt;Directory&gt;</a></code> or
@@ -4227,7 +4312,6 @@ certain events before failing a request</td></tr>
 <tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config, virtual host</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Available in Apache HTTP Server 1.3.34, 2.0.55 and later</td></tr>
 </table>
     <p>This directive overrides the behavior of <code>TRACE</code> for both
     the core server and <code class="module"><a href="../mod/mod_proxy.html">mod_proxy</a></code>.  The default
@@ -4502,6 +4586,36 @@ hostname or IP address</td></tr>
     different sections are combined when a request is received</li>
 </ul>
 </div>
+<div class="top"><a href="#page-header"><img alt="top" src="../images/up.gif" /></a></div>
+<div class="directive-section"><h2><a name="Warning" id="Warning">Warning</a> <a name="warning" id="warning">Directive</a></h2>
+<table class="directive">
+<tr><th><a href="directive-dict.html#Description">Description:</a></th><td>Warn from configuration parsing with a custom message</td></tr>
+<tr><th><a href="directive-dict.html#Syntax">Syntax:</a></th><td><code>Warning <var>message</var></code></td></tr>
+<tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config, virtual host, directory, .htaccess</td></tr>
+<tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Core</td></tr>
+<tr><th><a href="directive-dict.html#Module">Module:</a></th><td>core</td></tr>
+<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>2.5 and later</td></tr>
+</table>
+    <p>If an issue can be detected from within the configuration, this
+    directive can be used to generate a custom warning message. The
+    configuration parsing is not halted. The typical use it to check
+    whether some user define options are set, and warn if not.</p>
+
+    <pre class="prettyprint lang-config">
+# Example
+# tell when ReverseProxy is not set
+&lt;IfDefine !ReverseProxy&gt;
+  Warning "reverse proxy is not started, hope this is okay!"
+&lt;/IfDefine&gt;
+
+&lt;IfDefine ReverseProxy&gt;
+  # define custom proxy configuration
+&lt;/IfDefine&gt;
+    </pre>
+
+
+
+</div>
 </div>
 <div class="bottomlang">
 <p><span>Available Languages: </span><a href="../de/mod/core.html" hreflang="de" rel="alternate" title="Deutsch">&nbsp;de&nbsp;</a> |
@@ -4528,8 +4642,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/mod/core.html';
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

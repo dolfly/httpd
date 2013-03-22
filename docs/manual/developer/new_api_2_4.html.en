@@ -14,7 +14,7 @@
 
 <link href="../images/favicon.ico" rel="shortcut icon" /></head>
 <body id="manual-page"><div id="page-header">
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
 <p class="apache">Apache HTTP Server Version 2.5</p>
 <img alt="" src="../images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div>
@@ -436,6 +436,14 @@
           would not have had a chance to enable support for this
           function.</dd>
 
+      <dt><code>ap_requires()</code></dt>
+      <dd>The core server now provides better infrastructure for handling
+          <code class="directive"><a href="../mod/mod_authz_core.html#require">Require</a></code> configuration.
+          Register an auth provider function for each supported entity using
+          <code>ap_register_auth_provider()</code>.  The function will be
+          called as necessary during <code class="directive">Require</code>
+          processing.  (Consult bundled modules for detailed examples.)</dd>
+
       <dt><code>ap_server_conf-&gt;process-&gt;pool</code>
       userdata</dt>
       <dd>
@@ -545,6 +553,15 @@
 
     <dt>Implement cleanups which clear pointer variables</dt>
     <dd>Use <code>ap_pool_cleanup_set_null()</code>.</dd>
+
+    <dt>Create run-time files such as shared memory files, pid files,
+    etc.</dt>
+    <dd>Use <code>ap_runtime_dir_relative()</code> so that the global
+    configuration for the location of such files, either by the
+    <code>DEFAULT_REL_RUNTIMEDIR</code> compile setting or the
+    <code class="directive"><a href="../mod/core.html#defaultruntimedir">DefaultRuntimeDir</a></code> directive,
+    will be respected.  <em>Apache httpd 2.4.2 and above.</em></dd>
+
     </dl>
   
 
@@ -569,8 +586,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/developer/new_api_
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

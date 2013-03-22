@@ -91,7 +91,7 @@ static int ssl_tmp_key_init_rsa(server_rec *s,
 
     if (FIPS_mode() && bits < 1024) {
         mc->pTmpKeys[idx] = NULL;
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s, APLOGNO(01877)
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, APLOGNO(01877)
                      "Init: Skipping generating temporary "
                      "%d bit RSA private key in FIPS mode", bits);
         return OK;
@@ -140,7 +140,7 @@ static int ssl_tmp_key_init_dh(server_rec *s,
 
     if (FIPS_mode() && bits < 1024) {
         mc->pTmpKeys[idx] = NULL;
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s, APLOGNO(01880)
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, APLOGNO(01880)
                      "Init: Skipping generating temporary "
                      "%d bit DH parameters in FIPS mode", bits);
         return OK;
@@ -354,7 +354,7 @@ int ssl_init_Module(apr_pool_t *p, apr_pool_t *plog,
         }
     }
     else {
-        ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, s, APLOGNO(01886)
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, APLOGNO(01886)
                      "SSL FIPS mode disabled");
     }
 #endif
@@ -656,7 +656,7 @@ static void ssl_init_ctx_protocol(server_rec *s,
 
 
 #ifndef OPENSSL_NO_COMP
-    if (sc->compression == FALSE) {
+    if (sc->compression != TRUE) {
 #ifdef SSL_OP_NO_COMPRESSION
         /* OpenSSL >= 1.0 only */
         SSL_CTX_set_options(ctx, SSL_OP_NO_COMPRESSION);
@@ -685,6 +685,26 @@ static void ssl_init_ctx_protocol(server_rec *s,
      * so that an acceptable cipher suite can be negotiated.
      */
     SSL_CTX_set_options(ctx, SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
+#endif
+
+#ifdef HAVE_SSL_CONF_CMD
+{
+    ssl_ctx_param_t *param = (ssl_ctx_param_t *)mctx->ssl_ctx_param->elts;
+    SSL_CONF_CTX *cctx;
+    int i;
+    cctx = SSL_CONF_CTX_new();
+    SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_FILE|SSL_CONF_FLAG_SERVER);
+    SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
+    for (i = 0; i < mctx->ssl_ctx_param->nelts; i++, param++) {
+        if (SSL_CONF_cmd(cctx, param->name, param->value) <= 0) {
+            ap_log_error(APLOG_MARK, APLOG_EMERG, 0, s, APLOGNO(02407)
+                    "Error SSL_CONF_cmd(%s,%s)", param->name, param->value);
+            ssl_log_ssl_error(SSLLOG_MARK, APLOG_EMERG, s);
+            ssl_die(s);
+        }    
+    }
+    SSL_CONF_CTX_free(cctx);
+}
 #endif
 
 #ifdef SSL_MODE_RELEASE_BUFFERS
@@ -1134,7 +1154,6 @@ static void ssl_check_public_cert(server_rec *s,
                                   int type)
 {
     int is_ca, pathlen;
-    apr_array_header_t *ids;
 
     if (!cert) {
         return;
@@ -1167,56 +1186,12 @@ static void ssl_check_public_cert(server_rec *s,
         }
     }
 
-    /*
-     * Check if the server name is covered by the certificate.
-     * Consider both dNSName entries in the subjectAltName extension
-     * and, as a fallback, commonName attributes in the subject DN.
-     * (DNS-IDs and CN-IDs as defined in RFC 6125).
-     */
-    if (SSL_X509_getIDs(ptemp, cert, &ids)) {
-        char *cp;
-        int i;
-        char **id = (char **)ids->elts;
-        BOOL is_wildcard, matched = FALSE;
-
-        for (i = 0; i < ids->nelts; i++) {
-            if (!id[i])
-                continue;
-
-            /*
-             * Determine if it is a wildcard ID - we're restrictive
-             * in the sense that we require the wildcard character to be
-             * THE left-most label (i.e., the ID must start with "*.")
-             */
-            is_wildcard = (*id[i] == '*' && *(id[i]+1) == '.') ? TRUE : FALSE;
-
-            /*
-             * If the ID includes a wildcard character, check if it matches
-             * for the left-most DNS label (i.e., the wildcard character
-             * is not allowed to match a dot). Otherwise, try a simple
-             * string compare, case insensitively.
-             */
-            if ((is_wildcard == TRUE &&
-                 (cp = strchr(s->server_hostname, '.')) &&
-                 !strcasecmp(id[i]+1, cp)) ||
-                !strcasecmp(id[i], s->server_hostname)) {
-                matched = TRUE;
-                ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, APLOGNO(01908)
-                             "%sID '%s' in %s certificate configured "
-                             "for %s matches server name",
-                             is_wildcard ? "Wildcard " : "",
-                             id[i], ssl_asn1_keystr(type),
-                             (mySrvConfig(s))->vhost_id);
-                break;
-            }
-        }
-
-        if (matched == FALSE) {
-            ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s, APLOGNO(01909)
-                         "%s certificate configured for %s does NOT include "
-                         "an ID which matches the server name",
-                         ssl_asn1_keystr(type), (mySrvConfig(s))->vhost_id);
-        }
+    if (SSL_X509_match_name(ptemp, cert, (const char *)s->server_hostname,
+                            TRUE, s) == FALSE) {
+        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s, APLOGNO(01909)
+                     "%s certificate configured for %s does NOT include "
+                     "an ID which matches the server name",
+                     ssl_asn1_keystr(type), (mySrvConfig(s))->vhost_id);
     }
 }
 
@@ -1381,11 +1356,20 @@ static void ssl_init_proxy_certs(server_rec *s,
     for (n = 0; n < ncerts; n++) {
         X509_INFO *inf = sk_X509_INFO_value(sk, n);
 
-        if (!inf->x509 || !inf->x_pkey) {
+        if (!inf->x509 || !inf->x_pkey || !inf->x_pkey->dec_pkey) {
             sk_X509_INFO_free(sk);
             ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, s, APLOGNO(02252)
                          "incomplete client cert configured for SSL proxy "
                          "(missing or encrypted private key?)");
+            ssl_die(s);
+            return;
+        }
+        
+        if (X509_check_private_key(inf->x509, inf->x_pkey->dec_pkey) != 1) {
+            ssl_log_xerror(SSLLOG_MARK, APLOG_STARTUP, 0, ptemp, s, inf->x509,
+                           APLOGNO(02326) "proxy client certificate and "
+                           "private key do not match");
+            ssl_log_ssl_error(SSLLOG_MARK, APLOG_ERR, s);
             ssl_die(s);
             return;
         }
@@ -1401,7 +1385,11 @@ static void ssl_init_proxy_certs(server_rec *s,
         return;
     }
 
-    /* Load all of the CA certs and construct a chain */
+    /* If SSLProxyMachineCertificateChainFile is configured, load all
+     * the CA certs and have OpenSSL attempt to construct a full chain
+     * from each configured end-entity cert up to a root.  This will
+     * allow selection of the correct cert given a list of root CA
+     * names in the certificate request from the server.  */
     pkp->ca_certs = (STACK_OF(X509) **) apr_pcalloc(p, ncerts * sizeof(sk));
     sctx = X509_STORE_CTX_new();
 

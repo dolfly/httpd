@@ -45,7 +45,7 @@
 /* this whole thing disappears if LDAP is not enabled */
 #if APR_HAS_LDAP
 
-#ifdef LDAP_UNAVAILABLE
+#if defined(LDAP_UNAVAILABLE) || APR_HAS_MICROSOFT_LDAPSDK
 #define AP_LDAP_IS_SERVER_DOWN(s)                ((s) == LDAP_SERVER_DOWN \
                 ||(s) == LDAP_UNAVAILABLE)
 #else
@@ -129,6 +129,8 @@ typedef struct util_ldap_connection_t {
     int ReferralHopLimit;               /* # of referral hops to follow (default = AP_LDAP_DEFAULT_HOPLIMIT) */
     apr_time_t freed;                   /* the time this conn was placed back in the pool */
     apr_pool_t *rebind_pool;            /* frequently cleared pool for rebind data */
+    int must_rebind;                    /* The connection was last bound with other then binddn/bindpw */
+    request_rec *r;                     /* request_rec used to find this util_ldap_connection_t */
 } util_ldap_connection_t;
 
 typedef struct util_ldap_config_t {

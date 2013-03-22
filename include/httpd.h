@@ -813,7 +813,9 @@ struct request_rec {
     int proto_num;
     /** Protocol string, as given to us, or HTTP/0.9 */
     char *protocol;
-    /** Host, as set by full URI or Host: */
+    /** Host, as set by full URI or Host: header.
+     *  For literal IPv6 addresses, this does NOT include the surrounding [ ]
+     */
     const char *hostname;
 
     /** Time when the request started */
@@ -1151,7 +1153,7 @@ struct conn_rec {
 
     /** This points to the current thread being used to process this request,
      * over the lifetime of a request, the value may change. Users of the connection
-     * record should not rely upon it staying the same between calls that invole
+     * record should not rely upon it staying the same between calls that involve
      * the MPM.
      */
 #if APR_HAS_THREADS
@@ -1299,6 +1301,36 @@ struct server_rec {
 };
 
 /**
+ * @struct ap_sload_t
+ * @brief  A structure to hold server load params
+ */
+typedef struct ap_sload_t ap_sload_t;
+struct ap_sload_t {
+    /* percentage of process/threads ready/idle (0->100)*/
+    int idle;
+    /* percentage of process/threads busy (0->100) */
+    int busy;
+    /* total bytes served */
+    apr_off_t bytes_served;
+    /* total access count */
+    unsigned long access_count;
+};
+
+/**
+ * @struct ap_loadavg_t
+ * @brief  A structure to hold various server loadavg
+ */
+typedef struct ap_loadavg_t ap_loadavg_t;
+struct ap_loadavg_t {
+    /* current loadavg, ala getloadavg() */
+    float loadavg;
+    /* 5 min loadavg */
+    float loadavg5;
+    /* 15 min loadavg */
+    float loadavg15;
+};
+
+/**
  * Get the context_document_root for a request. This is a generalization of
  * the document root, which is too limited in the presence of mappers like
  * mod_userdir and mod_alias. The context_document_root is the directory
@@ -1358,7 +1390,7 @@ AP_DECLARE(char *) ap_ht_time(apr_pool_t *p, apr_time_t t, const char *fmt, int 
    char **) */
 
 /**
- * Get the characters until the first occurance of a specified character
+ * Get the characters until the first occurrence of a specified character
  * @param p The pool to allocate memory from
  * @param line The string to get the characters from
  * @param stop The character to stop at
@@ -1367,7 +1399,7 @@ AP_DECLARE(char *) ap_ht_time(apr_pool_t *p, apr_time_t t, const char *fmt, int 
 AP_DECLARE(char *) ap_getword(apr_pool_t *p, const char **line, char stop);
 
 /**
- * Get the characters until the first occurance of a specified character
+ * Get the characters until the first occurrence of a specified character
  * @param p The pool to allocate memory from
  * @param line The string to get the characters from
  * @param stop The character to stop at
@@ -1396,22 +1428,22 @@ AP_DECLARE(char *) ap_getword_white(apr_pool_t *p, const char **line);
 AP_DECLARE(char *) ap_getword_white_nc(apr_pool_t *p, char **line);
 
 /**
- * Get all characters from the first occurance of @a stop to the first "\0"
+ * Get all characters from the first occurrence of @a stop to the first "\0"
  * @param p The pool to allocate memory from
  * @param line The line to traverse
  * @param stop The character to start at
- * @return A copy of all caracters after the first occurance of the specified
+ * @return A copy of all characters after the first occurrence of the specified
  *         character
  */
 AP_DECLARE(char *) ap_getword_nulls(apr_pool_t *p, const char **line,
                                     char stop);
 
 /**
- * Get all characters from the first occurance of @a stop to the first "\0"
+ * Get all characters from the first occurrence of @a stop to the first "\0"
  * @param p The pool to allocate memory from
  * @param line The line to traverse
  * @param stop The character to start at
- * @return A copy of all caracters after the first occurance of the specified
+ * @return A copy of all characters after the first occurrence of the specified
  *         character
  * @note The same as ap_getword_nulls(), except it doesn't use const char **.
  */
@@ -1549,14 +1581,16 @@ AP_DECLARE(int) ap_unescape_urlencoded(char *query);
  * Convert all double slashes to single slashes
  * @param name The string to convert
  */
-AP_DECLARE(void) ap_no2slash(char *name);
+AP_DECLARE(void) ap_no2slash(char *name)
+                 AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Remove all ./ and xx/../ substrings from a file name. Also remove
  * any leading ../ or /../ substrings.
  * @param name the file name to parse
  */
-AP_DECLARE(void) ap_getparents(char *name);
+AP_DECLARE(void) ap_getparents(char *name)
+                 AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Escape a path segment, as defined in RFC 1808
@@ -1564,7 +1598,8 @@ AP_DECLARE(void) ap_getparents(char *name);
  * @param s The path to convert
  * @return The converted URL
  */
-AP_DECLARE(char *) ap_escape_path_segment(apr_pool_t *p, const char *s);
+AP_DECLARE(char *) ap_escape_path_segment(apr_pool_t *p, const char *s)
+                   AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Escape a path segment, as defined in RFC 1808, to a preallocated buffer.
@@ -1572,17 +1607,21 @@ AP_DECLARE(char *) ap_escape_path_segment(apr_pool_t *p, const char *s);
  * @param s The path to convert
  * @return The converted URL (c)
  */
-AP_DECLARE(char *) ap_escape_path_segment_buffer(char *c, const char *s);
+AP_DECLARE(char *) ap_escape_path_segment_buffer(char *c, const char *s)
+                   AP_FN_ATTR_NONNULL_ALL;
 
 /**
- * convert an OS path to a URL in an OS dependant way.
+ * convert an OS path to a URL in an OS dependent way.
  * @param p The pool to allocate from
  * @param path The path to convert
  * @param partial if set, assume that the path will be appended to something
- *        with a '/' in it (and thus does not prefix "./")
+ *        with a '/' in it (and thus does not prefix "./").
+ *        If not set, there will be one byte of additional space after the
+ *        NUL, to allow the caller to append a '/'.
  * @return The converted URL
  */
-AP_DECLARE(char *) ap_os_escape_path(apr_pool_t *p, const char *path, int partial);
+AP_DECLARE(char *) ap_os_escape_path(apr_pool_t *p, const char *path, int partial)
+                   AP_FN_ATTR_NONNULL_ALL;
 
 /** @see ap_os_escape_path */
 #define ap_escape_uri(ppool,path) ap_os_escape_path(ppool,path,1)
@@ -1593,7 +1632,8 @@ AP_DECLARE(char *) ap_os_escape_path(apr_pool_t *p, const char *path, int partia
  * @param s The path to convert
  * @return The converted URL
  */
-AP_DECLARE(char *) ap_escape_urlencoded(apr_pool_t *p, const char *s);
+AP_DECLARE(char *) ap_escape_urlencoded(apr_pool_t *p, const char *s)
+                   AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Escape a string as application/x-www-form-urlencoded, to a preallocated buffer
@@ -1601,7 +1641,8 @@ AP_DECLARE(char *) ap_escape_urlencoded(apr_pool_t *p, const char *s);
  * @param s The path to convert
  * @return The converted URL (c)
  */
-AP_DECLARE(char *) ap_escape_urlencoded_buffer(char *c, const char *s);
+AP_DECLARE(char *) ap_escape_urlencoded_buffer(char *c, const char *s)
+                   AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Escape an html string
@@ -1617,7 +1658,8 @@ AP_DECLARE(char *) ap_escape_urlencoded_buffer(char *c, const char *s);
  * @param toasc Whether to escape all non-ASCII chars to \&\#nnn;
  * @return The escaped string
  */
-AP_DECLARE(char *) ap_escape_html2(apr_pool_t *p, const char *s, int toasc);
+AP_DECLARE(char *) ap_escape_html2(apr_pool_t *p, const char *s, int toasc)
+                   AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Escape a string for logging
@@ -1625,7 +1667,8 @@ AP_DECLARE(char *) ap_escape_html2(apr_pool_t *p, const char *s, int toasc);
  * @param str The string to escape
  * @return The escaped string
  */
-AP_DECLARE(char *) ap_escape_logitem(apr_pool_t *p, const char *str);
+AP_DECLARE(char *) ap_escape_logitem(apr_pool_t *p, const char *str)
+                   AP_FN_ATTR_NONNULL((1));
 
 /**
  * Escape a string for logging into the error log (without a pool)
@@ -1635,7 +1678,8 @@ AP_DECLARE(char *) ap_escape_logitem(apr_pool_t *p, const char *str);
  * @return The len of the escaped string (always < maxlen)
  */
 AP_DECLARE(apr_size_t) ap_escape_errorlog_item(char *dest, const char *source,
-                                               apr_size_t buflen);
+                                               apr_size_t buflen)
+                       AP_FN_ATTR_NONNULL((1));
 
 /**
  * Construct a full hostname
@@ -1646,7 +1690,8 @@ AP_DECLARE(apr_size_t) ap_escape_errorlog_item(char *dest, const char *source,
  * @return The server's hostname
  */
 AP_DECLARE(char *) ap_construct_server(apr_pool_t *p, const char *hostname,
-                                    apr_port_t port, const request_rec *r);
+                                    apr_port_t port, const request_rec *r)
+                   AP_FN_ATTR_NONNULL((1,4));
 
 /**
  * Escape a shell command
@@ -1654,14 +1699,16 @@ AP_DECLARE(char *) ap_construct_server(apr_pool_t *p, const char *hostname,
  * @param s The command to escape
  * @return The escaped shell command
  */
-AP_DECLARE(char *) ap_escape_shell_cmd(apr_pool_t *p, const char *s);
+AP_DECLARE(char *) ap_escape_shell_cmd(apr_pool_t *p, const char *s)
+                   AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Count the number of directories in a path
  * @param path The path to count
  * @return The number of directories
  */
-AP_DECLARE(int) ap_count_dirs(const char *path);
+AP_DECLARE(int) ap_count_dirs(const char *path)
+                AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Copy at most @a n leading directories of @a s into @a d. @a d
@@ -1674,7 +1721,8 @@ AP_DECLARE(int) ap_count_dirs(const char *path);
  * @note on platforms with drive letters, n = 0 returns the "/" root,
  * whereas n = 1 returns the "d:/" root.  On all other platforms, n = 0
  * returns the empty string.  */
-AP_DECLARE(char *) ap_make_dirstr_prefix(char *d, const char *s, int n);
+AP_DECLARE(char *) ap_make_dirstr_prefix(char *d, const char *s, int n)
+                   AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Return the parent directory name (including trailing /) of the file
@@ -1683,7 +1731,8 @@ AP_DECLARE(char *) ap_make_dirstr_prefix(char *d, const char *s, int n);
  * @param s The file to get the parent of
  * @return A copy of the file's parent directory
  */
-AP_DECLARE(char *) ap_make_dirstr_parent(apr_pool_t *p, const char *s);
+AP_DECLARE(char *) ap_make_dirstr_parent(apr_pool_t *p, const char *s)
+                   AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Given a directory and filename, create a single path from them.  This
@@ -1692,12 +1741,14 @@ AP_DECLARE(char *) ap_make_dirstr_parent(apr_pool_t *p, const char *s);
  * @param a The pool to allocate from
  * @param dir The directory name
  * @param f The filename
- * @return A copy of the full path
+ * @return A copy of the full path, with one byte of extra space after the NUL
+ *         to allow the caller to add a trailing '/'.
  * @note Never consider using this function if you are dealing with filesystem
  * names that need to remain canonical, unless you are merging an apr_dir_read
  * path and returned filename.  Otherwise, the result is not canonical.
  */
-AP_DECLARE(char *) ap_make_full_path(apr_pool_t *a, const char *dir, const char *f);
+AP_DECLARE(char *) ap_make_full_path(apr_pool_t *a, const char *dir, const char *f)
+                   AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Test if the given path has an an absolute path.
@@ -1707,7 +1758,8 @@ AP_DECLARE(char *) ap_make_full_path(apr_pool_t *a, const char *dir, const char 
  * multiple forms of absolute paths.  This only reports if the path is absolute
  * in a canonical sense.
  */
-AP_DECLARE(int) ap_os_is_path_absolute(apr_pool_t *p, const char *dir);
+AP_DECLARE(int) ap_os_is_path_absolute(apr_pool_t *p, const char *dir)
+                AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Does the provided string contain wildcard characters?  This is useful
@@ -1716,24 +1768,27 @@ AP_DECLARE(int) ap_os_is_path_absolute(apr_pool_t *p, const char *dir);
  * @param str The string to check
  * @return 1 if the string has wildcards, 0 otherwise
  */
-AP_DECLARE(int) ap_is_matchexp(const char *str);
+AP_DECLARE(int) ap_is_matchexp(const char *str)
+                AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Determine if a string matches a patterm containing the wildcards '?' or '*'
  * @param str The string to check
  * @param expected The pattern to match against
- * @return 1 if the two strings match, 0 otherwise
+ * @return 0 if the two strings match, 1 otherwise
  */
-AP_DECLARE(int) ap_strcmp_match(const char *str, const char *expected);
+AP_DECLARE(int) ap_strcmp_match(const char *str, const char *expected)
+                AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Determine if a string matches a patterm containing the wildcards '?' or '*',
  * ignoring case
  * @param str The string to check
  * @param expected The pattern to match against
- * @return 1 if the two strings match, 0 otherwise
+ * @return 0 if the two strings match, 1 otherwise
  */
-AP_DECLARE(int) ap_strcasecmp_match(const char *str, const char *expected);
+AP_DECLARE(int) ap_strcasecmp_match(const char *str, const char *expected)
+                AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Find the first occurrence of the substring s2 in s1, regardless of case
@@ -1742,7 +1797,8 @@ AP_DECLARE(int) ap_strcasecmp_match(const char *str, const char *expected);
  * @return A pointer to the beginning of the substring
  * @remark See apr_strmatch() for a faster alternative
  */
-AP_DECLARE(char *) ap_strcasestr(const char *s1, const char *s2);
+AP_DECLARE(char *) ap_strcasestr(const char *s1, const char *s2)
+                   AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Return a pointer to the location inside of bigstring immediately after prefix
@@ -1751,7 +1807,8 @@ AP_DECLARE(char *) ap_strcasestr(const char *s1, const char *s2);
  * @return A pointer relative to bigstring after prefix
  */
 AP_DECLARE(const char *) ap_stripprefix(const char *bigstring,
-                                        const char *prefix);
+                                        const char *prefix)
+                         AP_FN_ATTR_NONNULL_ALL;
 
 /**
  * Decode a base64 encoded string into memory allocated from a pool
@@ -2183,6 +2240,68 @@ AP_DECLARE(void *) ap_calloc(size_t nelem, size_t size)
 AP_DECLARE(void *) ap_realloc(void *ptr, size_t size)
                    AP_FN_ATTR_WARN_UNUSED_RESULT
                    AP_FN_ATTR_ALLOC_SIZE(2);
+
+/**
+ * Get server load params
+ * @param ld struct to populate: -1 in fields means error
+ */
+AP_DECLARE(void) ap_get_sload(ap_sload_t *ld)
+                 AP_FN_ATTR_NONNULL_ALL;
+
+/**
+ * Get server load averages (ala getloadavg)
+ * @param ld struct to populate: -1 in fields means error
+ */
+AP_DECLARE(void) ap_get_loadavg(ap_loadavg_t *ld)
+                 AP_FN_ATTR_NONNULL_ALL;
+
+/**
+ * Convert binary data into a hex string
+ * @param src pointer to the data
+ * @param srclen length of the data
+ * @param dest pointer to buffer of length (2 * srclen + 1). The resulting
+ *        string will be NUL-terminated.
+ */
+AP_DECLARE(void) ap_bin2hex(const void *src, apr_size_t srclen, char *dest)
+                 AP_FN_ATTR_NONNULL_ALL;
+
+/**
+ * Check if string contains a control character
+ * @param str the string to check
+ * @param srclen length of the data
+ * @return 1 if yes, 0 if no control characters
+ */
+AP_DECLARE(int) ap_has_cntrl(const char *str)
+                AP_FN_ATTR_NONNULL_ALL;
+
+/**
+ * Wrapper for @a apr_password_validate() to cache expensive calculations
+ * @param r the current request
+ * @param username username of the user
+ * @param passwd password string
+ * @param hash hash string to be passwd to @a apr_password_validate()
+ * @return APR_SUCCESS if passwords match, APR_EMISMATCH or error otherwise
+ * @note Currently, ap_password_validate() only caches the result of the
+ *       most recent call with the same connection as @a r.
+ *       In the future, it may also do rate-limiting against brute-force
+ *       attacks.
+ */
+AP_DECLARE(apr_status_t) ap_password_validate(request_rec *r,
+                                              const char *username,
+                                              const char *passwd,
+                                              const char *hash);
+
+/**
+ * Short function to execute a command and return the first line of
+ * output minus \r \n. Useful for "obscuring" passwords via exec calls
+ * @param p the pool to allocate from
+ * @param cmd the command to execute
+ * @param argv the arguments to pass to the cmd
+ * @return ptr to characters or NULL on any error
+ */
+AP_DECLARE(char *) ap_get_exec_line(apr_pool_t *p,
+                                    const char *cmd,
+                                    const char * const *argv);
 
 
 #define AP_NORESTART APR_OS_START_USEERR + 1

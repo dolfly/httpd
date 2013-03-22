@@ -15,7 +15,7 @@
 <link href="./images/favicon.ico" rel="shortcut icon" /></head>
 <body id="manual-page">
 <div id="page-header">
-<p class="menu"><a href="./mod/">模块</a> | <a href="./mod/directives.html">指令</a> | <a href="http://wiki.apache.org/httpd/FAQ">常见问题</a> | <a href="./glossary.html">术语</a> | <a href="./sitemap.html">网站导航</a></p>
+<p class="menu"><a href="./mod/">模块</a> | <a href="./mod/quickreference.html">指令</a> | <a href="http://wiki.apache.org/httpd/FAQ">常见问题</a> | <a href="./glossary.html">术语</a> | <a href="./sitemap.html">网站导航</a></p>
 <p class="apache">Apache HTTP 服务器版本 2.5</p>
 <img alt="" src="./images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="./images/left.gif" /></a></div>
@@ -170,6 +170,7 @@
 </ul><ul><li><a href="mod/mod_access_compat.html">Apache 模块 mod_access_compat</a></li>
 <li><a href="mod/mod_actions.html">Apache 模块 mod_actions</a></li>
 <li><a href="mod/mod_alias.html">Apache 模块 mod_alias</a></li>
+<li><a href="mod/mod_allowhandlers.html">Apache 模块 mod_allowhandlers</a></li>
 <li><a href="mod/mod_allowmethods.html">Apache 模块 mod_allowmethods</a></li>
 <li><a href="mod/mod_asis.html">Apache 模块 mod_asis</a></li>
 <li><a href="mod/mod_auth_basic.html">Apache 模块 mod_auth_basic</a></li>
@@ -233,6 +234,7 @@
 <li><a href="mod/mod_log_forensic.html">Apache 模块 mod_log_forensic</a></li>
 <li><a href="mod/mod_logio.html">Apache 模块 mod_logio</a></li>
 <li><a href="mod/mod_lua.html">Apache 模块 mod_lua</a></li>
+<li><a href="mod/mod_macro.html">Apache 模块 mod_macro</a></li>
 <li><a href="mod/mod_mime.html">Apache 模块 mod_mime</a></li>
 <li><a href="mod/mod_mime_magic.html">Apache 模块 mod_mime_magic</a></li>
 <li><a href="mod/mod_negotiation.html">Apache 模块 mod_negotiation</a></li>
@@ -329,8 +331,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/sitemap.html';
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />基于 <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a> 许可证.</p>
-<p class="menu"><a href="./mod/">模块</a> | <a href="./mod/directives.html">指令</a> | <a href="http://wiki.apache.org/httpd/FAQ">常见问题</a> | <a href="./glossary.html">术语</a> | <a href="./sitemap.html">网站导航</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />基于 <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a> 许可证.</p>
+<p class="menu"><a href="./mod/">模块</a> | <a href="./mod/quickreference.html">指令</a> | <a href="http://wiki.apache.org/httpd/FAQ">常见问题</a> | <a href="./glossary.html">术语</a> | <a href="./sitemap.html">网站导航</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

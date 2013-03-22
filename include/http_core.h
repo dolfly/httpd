@@ -664,6 +664,18 @@ typedef struct {
 #define AP_TRACE_EXTENDED  2
     int trace_enable;
 
+    apr_array_header_t *conn_log_level;
+
+#define AP_HTTP09_UNSET   0
+#define AP_HTTP09_ENABLE  1
+#define AP_HTTP09_DISABLE 2
+    char http09_enable;
+
+#define AP_HTTP_CONFORMANCE_UNSET     0
+#define AP_HTTP_CONFORMANCE_LIBERAL   1
+#define AP_HTTP_CONFORMANCE_STRICT    2
+#define AP_HTTP_CONFORMANCE_LOGONLY   4
+    char http_conformance;
 } core_server_config;
 
 /* for AddOutputFiltersByType in core.c */
@@ -741,10 +753,10 @@ typedef struct {
 } ap_mgmt_item_t;
 
 /* Handles for core filters */
-extern AP_DECLARE_DATA ap_filter_rec_t *ap_subreq_core_filter_handle;
-extern AP_DECLARE_DATA ap_filter_rec_t *ap_core_output_filter_handle;
-extern AP_DECLARE_DATA ap_filter_rec_t *ap_content_length_filter_handle;
-extern AP_DECLARE_DATA ap_filter_rec_t *ap_core_input_filter_handle;
+AP_DECLARE_DATA extern ap_filter_rec_t *ap_subreq_core_filter_handle;
+AP_DECLARE_DATA extern ap_filter_rec_t *ap_core_output_filter_handle;
+AP_DECLARE_DATA extern ap_filter_rec_t *ap_content_length_filter_handle;
+AP_DECLARE_DATA extern ap_filter_rec_t *ap_core_input_filter_handle;
 
 /**
  * This hook provdes a way for modules to provide metrics/statistics about
@@ -794,7 +806,7 @@ typedef struct ap_errorlog_info {
     const server_rec *s;
 
     /** current conn_rec.
-     *  Should be preferred over r->connecction
+     *  Should be preferred over r->connection
      */
     const conn_rec *c;
 

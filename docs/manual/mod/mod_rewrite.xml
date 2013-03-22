@@ -108,9 +108,9 @@ URLs on the fly</description>
       all. It does not even update the <code>SCRIPT_URx</code>
       environment variables.</p>
 
-      <p>Use this directive to disable the module instead of
-      commenting out all the <directive
-      module="mod_rewrite">RewriteRule</directive> directives!</p>
+      <p>Use this directive to disable rules in a particular contact,
+      rather than commenting out all the <directive
+      module="mod_rewrite">RewriteRule</directive> directives.</p>
 
       <p>Note that rewrite configurations are not
       inherited by virtual hosts. This means that you need to have a
@@ -132,8 +132,6 @@ URLs on the fly</description>
 <contextlist><context>server config</context><context>virtual host</context>
 <context>directory</context><context>.htaccess</context></contextlist>
 <override>FileInfo</override>
-<compatibility><code>MaxRedirects</code> is no longer available in version 2.1 and
-later</compatibility>
 <usage>
 
       <p>The <directive>RewriteOptions</directive> directive sets some
@@ -220,6 +218,15 @@ later</compatibility>
       </note>
       </dd>
 
+      <dt><code>MergeBase</code></dt>
+      <dd>
+
+      <p>With this option, the value of <directive module="mod_rewrite"
+      >RewriteBase</directive> is copied from where it's explicitly defined
+      into any sub-directory or sub-location that doesn't define its own
+      <directive module="mod_rewrite">RewriteBase</directive>. Available in 
+      Apache HTTP Server 2.5 and later only.</p>
+      </dd>
       </dl>
 
 </usage>
@@ -233,8 +240,6 @@ later</compatibility>
 </syntax>
 <contextlist><context>server config</context><context>virtual host</context>
 </contextlist>
-<compatibility>The choice of different dbm types is available in
-Apache HTTP Server 2.0.41 and later</compatibility>
 
 <usage>
       <p>The <directive>RewriteMap</directive> directive defines a
@@ -547,7 +552,11 @@ Alias /myapp /opt/myapp-1.2.3
                   been determined by the server at the time
                   <code>REQUEST_FILENAME</code> is referenced. Otherwise,
                   such as when used in virtual host context, the same
-                  value as <code>REQUEST_URI</code>.</dd>
+                  value as <code>REQUEST_URI</code>.  Depending on the value of 
+                  <directive module="core">AcceptPathInfo</directive>, the
+                  server may have only used some leading components of the 
+                  <code>REQUEST_URI</code> to map the request to a file.
+                  </dd>
 
                   <dt><code>HTTPS</code></dt>
 
@@ -567,9 +576,11 @@ Alias /myapp /opt/myapp-1.2.3
         </li>
       </ul>
 
-      <p>If the <em>TestString</em> has the special value <code>expr</code>, the
-      <em>CondPattern</em> will be treated as an
-      <a href="../expr.html">ap_expr</a>.</p>
+      <p>If the <em>TestString</em> has the special value <code>expr</code>,
+      the <em>CondPattern</em> will be treated as an
+      <a href="../expr.html">ap_expr</a>. HTTP headers referenced in the
+      expression will be added to the Vary header if the <code>novary</code>
+      flag is not given.</p>
 
       <p>Other things you should be aware of:</p>
 
@@ -1046,7 +1057,9 @@ cannot use <code>$N</code> in the substitution string!
         you specify a <em>Substitution</em> string of
         <code>/www/file.html</code>, then this will be treated as a
         URL-path <em>unless</em> a directory named <code>www</code>
-        exists at the root or your file-system, in which case it will
+        exists at the root or your file-system (or, in the case of 
+        using rewrites in a <code>.htaccess</code> file, relative to
+        your document root), in which case it will
         be treated as a file-system path. If you wish other
         URL-mapping directives (such as <directive
         module="mod_alias">Alias</directive>) to be applied to the
@@ -1186,7 +1199,7 @@ cannot use <code>$N</code> in the substitution string!
         <td>Stop the rewriting process immediately and don't apply any
         more rules. Especially note caveats for per-directory and
         .htaccess context (see also the END flag). <em><a
-        href="../rewrite/flags.html#flag_l">details ...</a></em></td>
+        href="../rewrite/flags.html#flag_end">details ...</a></em></td>
     </tr>
     <tr>
         <td>next|N</td>
@@ -1356,7 +1369,7 @@ directive.</p>
 
       <p><strong>Inside per-directory configuration for
       <code>/somepath</code><br />
-       (<code>/physical/path/to/somepath/.htacccess</code>, with
+       (<code>/physical/path/to/somepath/.htaccess</code>, with
       <code>RewriteBase /somepath</code>)<br />
        for request ``<code>GET
       /somepath/localpath/pathinfo</code>'':</strong><br />

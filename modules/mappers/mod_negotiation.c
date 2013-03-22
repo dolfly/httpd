@@ -366,7 +366,7 @@ static float atoq(const char *string)
         return  1.0f;
     }
 
-    while (*string && apr_isspace(*string)) {
+    while (apr_isspace(*string)) {
         ++string;
     }
 
@@ -464,7 +464,7 @@ static const char *get_entry(apr_pool_t *p, accept_rec *result,
         }
 
         *cp++ = '\0';           /* Delimit var */
-        while (*cp && (apr_isspace(*cp) || *cp == '=')) {
+        while (apr_isspace(*cp) || *cp == '=') {
             ++cp;
         }
 
@@ -757,7 +757,7 @@ static enum header_state get_header_line(char *buffer, int len, apr_file_t *map)
 
     /* If blank, just return it --- this ends information on this variant */
 
-    for (cp = buffer; (*cp && apr_isspace(*cp)); ++cp) {
+    for (cp = buffer; apr_isspace(*cp); ++cp) {
         continue;
     }
 
@@ -924,7 +924,7 @@ static char *lcase_header_name_return_body(char *header, request_rec *r)
 
     do {
         ++cp;
-    } while (*cp && apr_isspace(*cp));
+    } while (apr_isspace(*cp));
 
     if (!*cp) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, APLOGNO(00682)
@@ -2606,7 +2606,7 @@ static void set_neg_headers(request_rec *r, negotiation_state *neg,
     }
 
     if (neg->is_transparent || vary_by_type || vary_by_language ||
-        vary_by_language || vary_by_charset || vary_by_encoding) {
+        vary_by_charset || vary_by_encoding) {
 
         apr_table_mergen(hdrs, "Vary", 2 + apr_pstrcat(r->pool,
             neg->is_transparent ? ", negotiate"       : "",

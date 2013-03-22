@@ -14,7 +14,7 @@
 
 <link href="../images/favicon.ico" rel="shortcut icon" /></head>
 <body id="manual-page"><div id="page-header">
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossaire</a> | <a href="../sitemap.html">Plan du site</a></p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossaire</a> | <a href="../sitemap.html">Plan du site</a></p>
 <p class="apache">Serveur Apache HTTP Version 2.5</p>
 <img alt="" src="../images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div>
@@ -276,7 +276,8 @@ Require user rbowen
     rapidement, et pour pallier cet inconvénient, Apache peut aussi
     stocker les données relatives aux
     utilisateurs dans des bases de données rapides. Le module
-    <code class="module"><a href="../mod/mod_authn_dbm.html">mod_authn_dbm</a></code> fournit la directive <code class="directive"><a href="../mod/mod_authn_dbm.html#authdbmuserfile">AuthDBMUserFile</a></code>. Le programme <code class="program"><a href="../programs/dbmmanage.html">dbmmanage</a></code> permet de créer et manipuler ces fichiers. Vous
+    <code class="module"><a href="../mod/mod_authn_dbm.html">mod_authn_dbm</a></code> fournit la directive <code class="directive"><a href="../mod/mod_authn_dbm.html#authdbmuserfile">AuthDBMUserFile</a></code>. Les programmes <code class="program"><a href="../programs/dbmmanage.html">dbmmanage</a></code> et <code class="program"><a href="../programs/htdbm.html">htdbm</a></code> permettent de
+    créer et manipuler ces fichiers. Vous
     trouverez de nombreuses options d'autres types d'authentification
     fournies par des modules tiers dans la <a href="http://modules.apache.org/">Base de données des modules
     d'Apache</a>.</p>
@@ -598,11 +599,12 @@ autorisation</a></h2>
         </pre>
 
 
-        <p>Dans l'exemple ci-dessus, on utilise la directive du
-	conteneur <code class="directive"><a href="../mod/mod_authz_core.html#requirenone">&lt;RequireNone&gt;</a></code> afin de s'assurer
-	qu'aucune des directives <code class="directive"><a href="../mod/mod_authz_core.html#require">Require</a></code> qu'il contient ne
-	fasse correspondre ses paramètres avant d'accorder
-	l'autorisation.</p>
+        <p>L'utilisation de la directive <code class="directive"><a href="../mod/mod_authz_core.html#requireall">&lt;RequireAll&gt;</a></code>
+	avec de multiples directives <code class="directive"><a href="../mod/mod_authz_core.html#require">&lt;Require&gt;</a></code>, toutes avec la négation
+	<code>not</code>, n'accordera l'accès que si toutes les
+	conditions négatives sont vérifiées. En d'autres termes, l'accès
+	sera refusé si au moins une des conditions négatives n'est pas
+	vérifiée.</p>
 
     
 
@@ -673,8 +675,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/howto/auth.html';
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />Autorisé sous <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossaire</a> | <a href="../sitemap.html">Plan du site</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />Autorisé sous <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossaire</a> | <a href="../sitemap.html">Plan du site</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

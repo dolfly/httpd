@@ -24,8 +24,7 @@
 
 <name>mod_actions</name>
 
-<description>This module provides for executing CGI scripts based on
-media type or request method.</description>
+<description>Execute CGI scripts based on media type or request method.</description>
 
 <status>Base</status>
 <sourcefile>mod_actions.c</sourcefile>
@@ -55,8 +54,6 @@ content-type</description>
 <context>directory</context><context>.htaccess</context>
 </contextlist>
 <override>FileInfo</override>
-<compatibility>The <code>virtual</code> modifier and handler passing were
-introduced in Apache 2.1</compatibility>
 
 <usage>
     <p>This directive adds an action, which will activate

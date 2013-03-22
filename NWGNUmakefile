@@ -62,18 +62,10 @@ XINCDIRS	+= \
 			$(APR)/include \
 			$(APRUTIL)/include \
 			$(SRC)/include \
-			$(STDMOD)/aaa \
 			$(STDMOD)/core \
 			$(STDMOD)/filters \
 			$(STDMOD)/generators \
-			$(STDMOD)/http \
-			$(STDMOD)/loggers \
-			$(STDMOD)/mappers \
 			$(STDMOD)/proxy \
-			$(STDMOD)/ssl \
-			$(SERVER) \
-			$(SERVER)/mpm/netware \
-			$(PCRE) \
 			$(NWOS) \
 			$(EOLIST)
 
@@ -424,6 +416,7 @@ install :: nlms instscripts FORCE
 	$(call MKCNF,docs/conf/extra/httpd-default.conf.in,            $(INSTALLBASE)/conf/extra/httpd-default.conf)
 	$(call MKCNF,docs/conf/extra/httpd-info.conf.in,               $(INSTALLBASE)/conf/extra/httpd-info.conf)
 	$(call MKCNF,docs/conf/extra/httpd-languages.conf.in,          $(INSTALLBASE)/conf/extra/httpd-languages.conf)
+	$(call MKCNF,docs/conf/extra/httpd-macro.conf.in,              $(INSTALLBASE)/conf/extra/httpd-macro.conf)
 	$(call MKCNF,docs/conf/extra/httpd-manual.conf.in,             $(INSTALLBASE)/conf/extra/httpd-manual.conf)
 	$(call MKCNF,docs/conf/extra/httpd-mpm.conf.in,                $(INSTALLBASE)/conf/extra/httpd-mpm.conf)
 	$(call MKCNF,docs/conf/extra/httpd-multilang-errordoc.conf.in, $(INSTALLBASE)/conf/extra/httpd-multilang-errordoc.conf)
@@ -446,6 +439,7 @@ installdev :: FORCE
 	$(call COPY,$(STDMOD)/core/mod_so.h,                           $(INSTALLBASE)/include/)
 	$(call COPY,$(STDMOD)/core/mod_watchdog.h,                     $(INSTALLBASE)/include/)
 	$(call COPY,$(STDMOD)/cache/mod_cache.h,                       $(INSTALLBASE)/include/)
+	$(call COPY,$(STDMOD)/cache/cache_common.h,                    $(INSTALLBASE)/include/)
 	$(call COPY,$(STDMOD)/database/mod_dbd.h,                      $(INSTALLBASE)/include/)
 	$(call COPY,$(STDMOD)/dav/main/mod_dav.h,                      $(INSTALLBASE)/include/)
 	$(call COPY,$(STDMOD)/filters/mod_include.h,                   $(INSTALLBASE)/include/)

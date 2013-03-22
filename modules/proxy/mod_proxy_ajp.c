@@ -207,7 +207,7 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
     /* send request headers */
     status = ajp_send_header(conn->sock, r, maxsize, uri);
     if (status != APR_SUCCESS) {
-        conn->close++;
+        conn->close = 1;
         ap_log_rerror(APLOG_MARK, APLOG_ERR, status, r, APLOGNO(00868)
                       "request failed to %pI (%s)",
                       conn->worker->cp->addr,
@@ -234,7 +234,7 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
     status = ajp_alloc_data_msg(r->pool, &buff, &bufsiz, &msg);
     if (status != APR_SUCCESS) {
         /* We had a failure: Close connection to backend */
-        conn->close++;
+        conn->close = 1;
         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, APLOGNO(00869)
                       "ajp_alloc_data_msg failed");
         return HTTP_INTERNAL_SERVER_ERROR;
@@ -255,7 +255,7 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
 
         if (status != APR_SUCCESS) {
             /* We had a failure: Close connection to backend */
-            conn->close++;
+            conn->close = 1;
             ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, APLOGNO(00871)
                           "ap_get_brigade failed");
             apr_brigade_destroy(input_brigade);
@@ -275,7 +275,7 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
         status = apr_brigade_flatten(input_brigade, buff, &bufsiz);
         if (status != APR_SUCCESS) {
             /* We had a failure: Close connection to backend */
-            conn->close++;
+            conn->close = 1;
             apr_brigade_destroy(input_brigade);
             ap_log_rerror(APLOG_MARK, APLOG_ERR, status, r, APLOGNO(00874)
                           "apr_brigade_flatten");
@@ -290,7 +290,7 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
             ajp_msg_log(r, msg, "First ajp_send_data_msg: ajp_ilink_send packet dump");
             if (status != APR_SUCCESS) {
                 /* We had a failure: Close connection to backend */
-                conn->close++;
+                conn->close = 1;
                 apr_brigade_destroy(input_brigade);
                 ap_log_rerror(APLOG_MARK, APLOG_ERR, status, r, APLOGNO(00876)
                               "send failed to %pI (%s)",
@@ -319,7 +319,7 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
              * for later resusage by the next request again.
              * Close it to clean things up.
              */
-            conn->close++;
+            conn->close = 1;
             return HTTP_BAD_REQUEST;
         }
     }
@@ -330,7 +330,7 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
                              (ajp_msg_t **)&(conn->data));
     if (status != APR_SUCCESS) {
         /* We had a failure: Close connection to backend */
-        conn->close++;
+        conn->close = 1;
         apr_brigade_destroy(input_brigade);
         ap_log_rerror(APLOG_MARK, APLOG_ERR, status, r, APLOGNO(00878)
                       "read response failed from %pI (%s)",
@@ -559,7 +559,7 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
          * But: Close this connection to the backend.
          */
         if (r->connection->aborted) {
-            conn->close++;
+            conn->close = 1;
             output_failed = 0;
             result = CMD_AJP13_END_RESPONSE;
             request_ended = 1;
@@ -597,7 +597,7 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
                       "Processing of request failed backend: %i, "
                       "output: %i", backend_failed, output_failed);
         /* We had a failure: Close connection to backend */
-        conn->close++;
+        conn->close = 1;
         /* Return DONE to avoid error messages being added to the stream */
         if (data_sent) {
             rv = DONE;
@@ -607,7 +607,7 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, APLOGNO(00891)
                       "Processing of request didn't terminate cleanly");
         /* We had a failure: Close connection to backend */
-        conn->close++;
+        conn->close = 1;
         backend_failed = 1;
         /* Return DONE to avoid error messages being added to the stream */
         if (data_sent) {
@@ -616,7 +616,7 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
     }
     else if (!conn_reuse) {
         /* Our backend signalled connection close */
-        conn->close++;
+        conn->close = 1;
     }
     else {
         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, APLOGNO(00892)
@@ -657,7 +657,16 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
              */
             rv = HTTP_SERVICE_UNAVAILABLE;
         } else {
-            rv = HTTP_INTERNAL_SERVER_ERROR;
+            /* If we had a successful cping/cpong and then a timeout
+             * we assume it is a request that cause a back-end timeout,
+             * but doesn't affect the whole worker.
+             */
+            if (APR_STATUS_IS_TIMEUP(status) && conn->worker->s->ping_timeout_set) {
+                rv = HTTP_GATEWAY_TIME_OUT;
+            }
+            else {
+                rv = HTTP_INTERNAL_SERVER_ERROR;
+            }
         }
     }
 
@@ -679,7 +688,7 @@ static int ap_proxy_ajp_request(apr_pool_t *p, request_rec *r,
     apr_brigade_destroy(output_brigade);
 
     if (apr_table_get(r->subprocess_env, "proxy-nokeepalive")) {
-        conn->close++;
+        conn->close = 1;
     }
 
     return rv;
@@ -758,7 +767,7 @@ static int proxy_ajp_handler(request_rec *r, proxy_worker *worker,
              * TCP connection gets closed and try it once again.
              */
             if (status != APR_SUCCESS) {
-                backend->close++;
+                backend->close = 1;
                 ap_log_rerror(APLOG_MARK, APLOG_ERR, status, r, APLOGNO(00897)
                               "cping/cpong failed to %pI (%s)",
                               worker->cp->addr, worker->s->hostname);

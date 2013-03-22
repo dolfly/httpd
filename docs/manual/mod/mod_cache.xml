@@ -178,7 +178,7 @@ LoadModule cache_module modules/mod_cache.so
   becomes stale, and the time the stale entity is fully refreshed. On a busy
   server, a significant number of requests might arrive during this time, and
   cause a <strong>thundering herd</strong> of requests to strike the backend
-  suddenly and unpredicably.</p>
+  suddenly and unpredictably.</p>
   <p>To keep the thundering herd at bay, the <directive>CacheLock</directive>
   directive can be used to define a directory in which locks are created for
   URLs <strong>in flight</strong>. The lock is used as a <strong>hint</strong>
@@ -377,23 +377,25 @@ manager</description>
     caching should be enabled for.</p>
 
     <highlight language="config">
-# Cache content
+# Cache content (normal handler only)
+CacheQuickHandler off
 &lt;Location /foo&gt;
     CacheEnable disk
 &lt;/Location&gt;
 
-# Cache regex
+# Cache regex (normal handler only)
+CacheQuickHandler off
 &lt;LocationMatch foo$&gt;
     CacheEnable disk
 &lt;/LocationMatch&gt;
 
-# Cache proxied url's
+# Cache proxied url's (normal or quick handler)
 CacheEnable  disk  /
 
-# Cache FTP-proxied url's
+# Cache FTP-proxied url's (normal or quick handler)
 CacheEnable  disk  ftp://
 
-# Cache content from www.example.org
+# Cache content from www.example.org (normal or quick handler)
 CacheEnable  disk  http://www.example.org/
     </highlight>
 
@@ -848,20 +850,21 @@ LastModified date.</description>
 <default>CacheLock off</default>
 <contextlist><context>server config</context><context>virtual host</context>
 </contextlist>
-<compatibility>Available in Apache 2.2.15 and later</compatibility>
 
 <usage>
   <p>The <directive>CacheLock</directive> directive enables the thundering herd lock
   for the given URL space.</p>
 
   <p>In a minimal configuration the following directive is all that is needed to
-  enable the thundering herd lock in the default system temp directory.</p>
+  enable the thundering herd lock in the default run-time file directory.</p>
 
   <highlight language="config">
 # Enable cache lock
 CacheLock on
   </highlight>
 
+  <p>Locks consist of empty files that only exist for stale URLs in flight, so this
+  is significantly less resource intensive than the traditional disk cache.</p>
 </usage>
 </directivesynopsis>
 
@@ -869,17 +872,15 @@ CacheLock on
 <name>CacheLockPath</name>
 <description>Set the lock path directory.</description>
 <syntax>CacheLockPath <var>directory</var></syntax>
-<default>CacheLockPath /tmp/mod_cache-lock</default>
+<default>CacheLockPath mod_cache-lock</default>
 <contextlist><context>server config</context><context>virtual host</context>
 </contextlist>
 
 <usage>
   <p>The <directive>CacheLockPath</directive> directive allows you to specify the
-  directory in which the locks are created. By default, the system's temporary
-  folder is used. Locks consist of empty files that only exist for stale URLs
-  in flight, so is significantly less resource intensive than the traditional
-  disk cache.</p>
-
+  directory in which the locks are created.  If <var>directory</var> is not an absolute
+  path, the location specified will be relative to the value of 
+  <directive module="core">DefaultRuntimeDir</directive>.</p>
 </usage>
 </directivesynopsis>
 

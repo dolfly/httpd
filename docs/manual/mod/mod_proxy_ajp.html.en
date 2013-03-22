@@ -15,7 +15,7 @@
 <link href="../images/favicon.ico" rel="shortcut icon" /></head>
 <body>
 <div id="page-header">
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
 <p class="apache">Apache HTTP Server Version 2.5</p>
 <img alt="" src="../images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div>
@@ -31,8 +31,7 @@
 <code class="module"><a href="../mod/mod_proxy.html">mod_proxy</a></code></td></tr>
 <tr><th><a href="module-dict.html#Status">Status:</a></th><td>Extension</td></tr>
 <tr><th><a href="module-dict.html#ModuleIdentifier">Module Identifier:</a></th><td>proxy_ajp_module</td></tr>
-<tr><th><a href="module-dict.html#SourceFile">Source File:</a></th><td>mod_proxy_ajp.c</td></tr>
-<tr><th><a href="module-dict.html#Compatibility">Compatibility:</a></th><td>Available in version 2.1 and later</td></tr></table>
+<tr><th><a href="module-dict.html#SourceFile">Source File:</a></th><td>mod_proxy_ajp.c</td></tr></table>
 <h3>Summary</h3>
 
     <p>This module <em>requires</em> the service of <code class="module"><a href="../mod/mod_proxy.html">mod_proxy</a></code>. It provides support for the
@@ -133,10 +132,10 @@ ProxyPassReverse /apps/foo http://www.example.com/foo
     the connection can be in one of the following states:</p>
     <ul>
     <li> Idle <br /> No request is being handled over this connection. </li>
-    <li> Assigned <br /> The connecton is handling a specific request.</li>
+    <li> Assigned <br /> The connection is handling a specific request.</li>
     </ul>
     <p>Once a connection is assigned to handle a particular request, the basic
-    request informaton (e.g. HTTP headers, etc) is sent over the connection in
+    request information (e.g. HTTP headers, etc) is sent over the connection in
     a highly condensed form (e.g. common strings are encoded as integers).
     Details of that format are below in Request Packet Structure. If there is a
     body to the request <code>(content-length &gt; 0)</code>, that is sent in a
@@ -152,7 +151,7 @@ ProxyPassReverse /apps/foo http://www.example.com/foo
     been transferred yet.  This is necessary because the packets have a fixed
     maximum size and arbitrary amounts of data can be included the body of a
     request (for uploaded files, for example).  (Note: this is unrelated to
-    HTTP chunked tranfer).</li>
+    HTTP chunked transfer).</li>
     <li>END_RESPONSE <br /> Finish the request-handling cycle.</li>
     </ul>
     <p>Each message is accompanied by a differently formatted packet of data.
@@ -290,7 +289,7 @@ ProxyPassReverse /apps/foo http://www.example.com/foo
     <p>To ensure some basic security, the container will only actually do the
     <code>Shutdown</code> if the request comes from the same machine on which
     it's hosted.</p>
-    <p>The first <code>Data</code> packet is send immediatly after the
+    <p>The first <code>Data</code> packet is send immediately after the
     <code>Forward Request</code> by the web server.</p>
     <p>The servlet container can send the following types of messages to the
     webserver:</p>
@@ -592,7 +591,7 @@ AJP13_GET_BODY_CHUNK :=
   <h3>Get Body Chunk</h3>
     <p>The container asks for more data from the request (If the body was
     too large to fit in the first packet sent over or when the request is
-    chuncked). The server will send a body packet back with an amount of data
+    chunked). The server will send a body packet back with an amount of data
     which is the minimum of the <code>request_length</code>, the maximum send
     body size <code>(8186 (8 Kbytes - 6))</code>, and the number of bytes
     actually left to send from the request body.<br />
@@ -624,8 +623,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/mod/mod_proxy_ajp.
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

@@ -165,6 +165,7 @@ TARGET_nlm = \
 	$(OBJDIR)/optfnimport.nlm \
 	$(OBJDIR)/opthookexport.nlm \
 	$(OBJDIR)/opthookimport.nlm \
+	$(OBJDIR)/policy.nlm \
 	$(EOLIST)
 
 #

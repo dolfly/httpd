@@ -318,7 +318,7 @@ var comments_identifier = 'http://httpd.apache.org/docs/]]></xsl:text>&httpd.com
 </xsl:choose>
 <div id="footer">&lf;
     <p class="apache">
-        <xsl:text>Copyright 2012 The Apache Software Foundation.</xsl:text><br />
+        <xsl:text>Copyright 2013 The Apache Software Foundation.</xsl:text><br />
         <xsl:if test="normalize-space($message[@id='before-license'])">
             <xsl:value-of select="$message[@id='before-license']"/>
             <xsl:text> </xsl:text>
@@ -559,7 +559,7 @@ if (typeof(prettyPrint) !== 'undefined') {
 
     <xsl:text> | </xsl:text>
 
-    <a href="{$path}/mod/directives.html">
+    <a href="{$path}/mod/quickreference.html">
         <xsl:value-of select="$message[@id='directives']" />
     </a>
 

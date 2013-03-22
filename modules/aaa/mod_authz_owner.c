@@ -28,8 +28,7 @@
 #include "http_request.h"
 
 #include "mod_auth.h"
-
-APR_DECLARE_OPTIONAL_FN(char*, authz_owner_get_file_group, (request_rec *r));
+#include "mod_authz_owner.h"
 
 static const command_rec authz_owner_cmds[] =
 {
@@ -110,8 +109,6 @@ static authz_status fileowner_check_authorization(request_rec *r,
 
 static char *authz_owner_get_file_group(request_rec *r)
 {
-    char *reason = NULL;
-
     /* file-group only figures out the file's group and lets
     * other modules do the actual authorization (against a group file/db).
     * Thus, these modules have to hook themselves after
@@ -120,6 +117,7 @@ static char *authz_owner_get_file_group(request_rec *r)
 #if !APR_HAS_USER
     return NULL;
 #else  /* APR_HAS_USER */
+    char *reason = NULL;
     char *group = NULL;
     apr_finfo_t finfo;
     apr_status_t status = 0;

@@ -191,6 +191,7 @@ static const char* really_last_key = "rewrite_really_last";
 #define OPTION_INHERIT_BEFORE       1<<2
 #define OPTION_NOSLASH              1<<3
 #define OPTION_ANYURI               1<<4
+#define OPTION_MERGEBASE            1<<5
 
 #ifndef RAND_MAX
 #define RAND_MAX 32767
@@ -1254,7 +1255,7 @@ static char *lookup_map_txtfile(request_rec *r, const char *file, char *key)
         }
 
         /* jump to the value */
-        while (*p && apr_isspace(*p)) {
+        while (apr_isspace(*p)) {
             ++p;
         }
 
@@ -2823,8 +2824,14 @@ static void *config_perdir_merge(apr_pool_t *p, void *basev, void *overridesv)
     a->state_set = overrides->state_set || base->state_set;
     a->options = (overrides->options_set == 0) ? base->options : overrides->options;
     a->options_set = overrides->options_set || base->options_set;
-    a->baseurl = (overrides->baseurl_set == 0) ? base->baseurl : overrides->baseurl;
-    a->baseurl_set = overrides->baseurl_set || base->baseurl_set;
+
+    if (a->options & OPTION_MERGEBASE) { 
+        a->baseurl = (overrides->baseurl_set == 0) ? base->baseurl : overrides->baseurl;
+        a->baseurl_set = overrides->baseurl_set || base->baseurl_set;
+    }
+    else { 
+        a->baseurl = overrides->baseurl;
+    }
 
     a->directory  = overrides->directory;
 
@@ -2899,6 +2906,9 @@ static const char *cmd_rewriteoptions(cmd_parms *cmd,
         else if (!strcasecmp(w, "allowanyuri")) {
             options |= OPTION_ANYURI;
         }
+        else if (!strcasecmp(w, "mergebase")) {
+            options |= OPTION_MERGEBASE;
+        }
         else {
             return apr_pstrcat(cmd->pool, "RewriteOptions: unknown option '",
                                w, "'", NULL);
@@ -2938,8 +2948,7 @@ static const char *cmd_rewritemap(cmd_parms *cmd, void *dconf, const char *a1,
 
     sconf = ap_get_module_config(cmd->server->module_config, &rewrite_module);
 
-    newmap = apr_palloc(cmd->pool, sizeof(rewritemap_entry));
-    newmap->func = NULL;
+    newmap = apr_pcalloc(cmd->pool, sizeof(rewritemap_entry));
 
     if (strncasecmp(a2, "txt:", 4) == 0) {
         if ((fname = ap_server_root_relative(cmd->pool, a2+4)) == NULL) {
@@ -2950,7 +2959,6 @@ static const char *cmd_rewritemap(cmd_parms *cmd, void *dconf, const char *a1,
         newmap->type      = MAPTYPE_TXT;
         newmap->datafile  = fname;
         newmap->checkfile = fname;
-        newmap->checkfile2= NULL;
         newmap->cachename = apr_psprintf(cmd->pool, "%pp:%s",
                                          (void *)cmd->server, a1);
     }
@@ -2963,7 +2971,6 @@ static const char *cmd_rewritemap(cmd_parms *cmd, void *dconf, const char *a1,
         newmap->type      = MAPTYPE_RND;
         newmap->datafile  = fname;
         newmap->checkfile = fname;
-        newmap->checkfile2= NULL;
         newmap->cachename = apr_psprintf(cmd->pool, "%pp:%s",
                                          (void *)cmd->server, a1);
     }
@@ -3037,17 +3044,10 @@ static const char *cmd_rewritemap(cmd_parms *cmd, void *dconf, const char *a1,
         }
 
         newmap->type      = MAPTYPE_PRG;
-        newmap->datafile  = NULL;
         newmap->checkfile = newmap->argv[0];
-        newmap->checkfile2= NULL;
-        newmap->cachename = NULL;
     }
     else if (strncasecmp(a2, "int:", 4) == 0) {
         newmap->type      = MAPTYPE_INT;
-        newmap->datafile  = NULL;
-        newmap->checkfile = NULL;
-        newmap->checkfile2= NULL;
-        newmap->cachename = NULL;
         newmap->func      = (char *(*)(request_rec *,char *))
                             apr_hash_get(mapfunc_hash, a2+4, strlen(a2+4));
         if (newmap->func == NULL) {
@@ -3064,12 +3064,9 @@ static const char *cmd_rewritemap(cmd_parms *cmd, void *dconf, const char *a1,
         newmap->type      = MAPTYPE_TXT;
         newmap->datafile  = fname;
         newmap->checkfile = fname;
-        newmap->checkfile2= NULL;
         newmap->cachename = apr_psprintf(cmd->pool, "%pp:%s",
                                          (void *)cmd->server, a1);
     }
-    newmap->fpin  = NULL;
-    newmap->fpout = NULL;
 
     if (newmap->checkfile
         && (apr_stat(&st, newmap->checkfile, APR_FINFO_MIN,

@@ -263,7 +263,7 @@ static int * const aplog_module_index;
 #define APLOGctrace7(c)             APLOG_C_IS_LEVEL(c,APLOG_TRACE7)
 #define APLOGctrace8(c)             APLOG_C_IS_LEVEL(c,APLOG_TRACE8)
 
-extern int AP_DECLARE_DATA ap_default_loglevel;
+AP_DECLARE_DATA extern int ap_default_loglevel;
 
 /**
  * APLOG_MARK is a convenience macro for use as the first three parameters in
@@ -569,21 +569,24 @@ AP_DECLARE(void) ap_log_command_line(apr_pool_t *p, server_rec *s);
 /**
  * Log the current pid of the parent process
  * @param p The pool to use for processing
- * @param fname The name of the file to log to
+ * @param fname The name of the file to log to.  If the filename is not
+ * absolute then it is assumed to be relative to DefaultRuntimeDir.
  */
 AP_DECLARE(void) ap_log_pid(apr_pool_t *p, const char *fname);
 
 /**
  * Remove the pidfile.
  * @param p The pool to use for processing
- * @param fname The name of the pid file to remove
+ * @param fname The name of the pid file to remove.  If the filename is not
+ * absolute then it is assumed to be relative to DefaultRuntimeDir.
  */
 AP_DECLARE(void) ap_remove_pid(apr_pool_t *p, const char *fname);
 
 /**
  * Retrieve the pid from a pidfile.
  * @param p The pool to use for processing
- * @param filename The name of the file containing the pid
+ * @param filename The name of the file containing the pid.  If the filename
+ * is not absolute then it is assumed to be relative to DefaultRuntimeDir.
  * @param mypid Pointer to pid_t (valid only if return APR_SUCCESS)
  */
 AP_DECLARE(apr_status_t) ap_read_pid(apr_pool_t *p, const char *filename, pid_t *mypid);

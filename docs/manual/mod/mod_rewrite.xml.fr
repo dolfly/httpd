@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE modulesynopsis SYSTEM "../style/modulesynopsis.dtd">
 <?xml-stylesheet type="text/xsl" href="../style/manual.fr.xsl"?>
-<!-- English Revision: 1356115:1364341 (outdated) -->
+<!-- English Revision : 1456072 -->
 <!-- French translation : Lucien GENTIS -->
 <!-- Reviewed by : Vincent Deffontaines -->
 
@@ -122,9 +122,10 @@ moteur de r&eacute;&eacute;criture</description>
       mettra pas &agrave; jour les variables d'environnement
       <code>SCRIPT_URx</code>.</p>
 
-      <p>Pour d&eacute;sactiver le module, il vaut mieux utiliser cette
-      directive que commenter toutes les directives <directive
-      module="mod_rewrite">RewriteRule</directive> !</p>
+      <p>Plut&ocirc;t que de commenter toutes les directives <directive
+      module="mod_rewrite">RewriteRule</directive>, il est pr&eacute;f&eacute;rable
+      d'utiliser cette directive si l'on souhaite d&eacute;sactiver les
+      r&egrave;gles de r&eacute;&eacute;criture dans un contexte particulier.</p>
 
       <p>Notez que les  h&ocirc;tes virtuels n'h&eacute;ritent pas des
       configurations de r&eacute;&eacute;criture. Ceci implique que vous devez
@@ -150,8 +151,6 @@ pour le moteur de r&eacute;&eacute;criture</description>
 <contextlist><context>server config</context><context>virtual host</context>
 <context>directory</context><context>.htaccess</context></contextlist>
 <override>FileInfo</override>
-<compatibility><code>MaxRedirects</code> n'est plus disponible depuis
-la version version 2.1</compatibility>
 <usage>
 
       <p>La directive <directive>RewriteOptions</directive> d&eacute;finit
@@ -245,6 +244,17 @@ la version version 2.1</compatibility>
       </note>
       </dd>
 
+      <dt><code>MergeBase</code></dt>
+      <dd>
+
+      <p>Avec cette option, la valeur de la directive <directive
+      module="mod_rewrite">RewriteBase</directive> est recopi&eacute;e depuis
+      une valeur explicitement d&eacute;finie dans tout sous-r&eacute;pertoire qui ne
+      d&eacute;finit pas sa propre directive <directive
+      module="mod_rewrite">RewriteBase</directive>. Disponible &agrave; partir
+      de la version 2.5 du serveur HTTP Apache.</p>
+      </dd>
+
       </dl>
 </usage>
 
@@ -259,8 +269,6 @@ correspondance</em>:<em>source de la correspondance</em>
 </syntax>
 <contextlist><context>server config</context><context>virtual host</context>
 </contextlist>
-<compatibility>Il est possible de choisir entre plusieurs types de
-bases de donn&eacute;es depuis la version 2.0.41 du serveur HTTP Apache</compatibility>
 
 <usage>
       <p>La directive <directive>RewriteMap</directive> d&eacute;finit une
@@ -596,7 +604,12 @@ la r&eacute;&eacute;criture soit effectu&eacute;e
 		  au moment o&ugrave; on y fait r&eacute;f&eacute;rence. Dans le cas
 		  contraire, et en particulier dans le cas d'un serveur
 		  virtuel, <code>REQUEST_FILENAME</code> contient la
-		  valeur de <code>REQUEST_URI</code>.</dd>
+		  valeur de <code>REQUEST_URI</code>. En fonction de la
+		  valeur de la directive <directive
+		  module="core">AcceptPathInfo</directive>, le serveur
+		  peut n'utiliser que certains &eacute;l&eacute;ments de t&ecirc;te du
+		  <code>REQUEST_URI</code> pour d&eacute;terminer &agrave; quel
+		  fichier correspond la requ&ecirc;te.</dd>
 
                   <dt><code>HTTPS</code></dt>
 
@@ -620,7 +633,10 @@ la r&eacute;&eacute;criture soit effectu&eacute;e
       <p>Si la <em>cha&icirc;ne de test</em> contient la valeur sp&eacute;ciale
       <code>expr</code>, <em>expression de comparaison</em> sera trait&eacute;
       en tant qu'expression rationnelle de type <a
-      href="../expr.html">ap_expr</a>.</p>
+      href="../expr.html">ap_expr</a>. Si des en-t&ecirc;tes HTTP sont
+      r&eacute;f&eacute;renc&eacute;s dans l'expression rationnelle, et si le drapeau
+      <code>novary</code> n'est pas activ&eacute;, ils seront ajout&eacute;s &agrave;
+      l'en-t&ecirc;te Vary.</p>
 
       <p>Autres points &agrave; conna&icirc;tre ::</p>
       <ol>
@@ -1155,7 +1171,9 @@ substitution !
 	<em>Substitution</em> <code>/www/file.html</code>, cette
 	derni&egrave;re sera trait&eacute;e comme un chemin d'URL <em>&agrave; moins</em>
 	qu'un r&eacute;pertoire nomm&eacute; <code>www</code> n'existe &agrave; la racine
-	de votre syst&egrave;me de fichiers, auquel cas la cha&icirc;ne de
+	de votre syst&egrave;me de fichiers (ou dans le cas d'une
+	r&eacute;&eacute;criture au sein d'un fichier <code>.htaccess</code>,
+	relativement &agrave; la racine des documents), auquel cas la cha&icirc;ne de
 	substitution sera trait&eacute;e comme un chemin du syst&egrave;me de
 	fichiers. Si vous d&eacute;sirez que d'autres directives de
 	correspondance d'URL (comme la directive <directive
@@ -1311,7 +1329,7 @@ substitution !
 	plus aucune r&egrave;gle. Pr&ecirc;tez une attention particuli&egrave;re aux mises
 	en garde concernant les contextes de niveau r&eacute;pertoire et
 	.htaccess (voir aussi le drapeau END). <em><a
-        href="../rewrite/flags.html#flag_l">d&eacute;tails ...</a></em></td>
+        href="../rewrite/flags.html#flag_end">d&eacute;tails ...</a></em></td>
     </tr>
     <tr>
         <td>next|N</td>

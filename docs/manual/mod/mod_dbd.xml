@@ -27,7 +27,6 @@
 <status>Extension</status>
 <sourcefile>mod_dbd.c</sourcefile>
 <identifier>dbd_module</identifier>
-<compatibility>Version 2.1 and later</compatibility>
 
 <summary>
     <p><module>mod_dbd</module> manages SQL database connections using
@@ -85,7 +84,7 @@ AP_DECLARE(ap_dbd_t*) ap_dbd_acquire(request_rec*);
 /* acquire a connection that will have the lifetime of a connection
  * and MUST NOT be explicitly closed.  Return NULL on error.
  */
-AP_DECLARE(ap_dbd_t*) ap_dbd_cacquire(request_rec*);
+AP_DECLARE(ap_dbd_t*) ap_dbd_cacquire(conn_rec*);
 
 /* Prepare a statement for use by a client module */
 AP_DECLARE(void) ap_dbd_prepare(server_rec*, const char*, const char*);

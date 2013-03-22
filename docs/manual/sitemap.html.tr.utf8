@@ -15,7 +15,7 @@
 <link href="./images/favicon.ico" rel="shortcut icon" /></head>
 <body id="manual-page">
 <div id="page-header">
-<p class="menu"><a href="./mod/">Modüller</a> | <a href="./mod/directives.html">Yönergeler</a> | <a href="http://wiki.apache.org/httpd/FAQ">SSS</a> | <a href="./glossary.html">Terimler</a> | <a href="./sitemap.html">Site Haritası</a></p>
+<p class="menu"><a href="./mod/">Modüller</a> | <a href="./mod/quickreference.html">Yönergeler</a> | <a href="http://wiki.apache.org/httpd/FAQ">SSS</a> | <a href="./glossary.html">Terimler</a> | <a href="./sitemap.html">Site Haritası</a></p>
 <p class="apache">Apache HTTP Sunucusu Sürüm 2.5</p>
 <img alt="" src="./images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="./images/left.gif" /></a></div>
@@ -172,6 +172,7 @@ Windows ile Apache Kullanımı</a></li>
 </ul><ul><li><a href="mod/mod_access_compat.html">Apache Modülü mod_access_compat</a></li>
 <li><a href="mod/mod_actions.html">Apache Modülü mod_actions</a></li>
 <li><a href="mod/mod_alias.html">Apache Modülü mod_alias</a></li>
+<li><a href="mod/mod_allowhandlers.html">Apache Modülü mod_allowhandlers</a></li>
 <li><a href="mod/mod_allowmethods.html">Apache Modülü mod_allowmethods</a></li>
 <li><a href="mod/mod_asis.html">Apache Modülü mod_asis</a></li>
 <li><a href="mod/mod_auth_basic.html">Apache Modülü mod_auth_basic</a></li>
@@ -235,6 +236,7 @@ Windows ile Apache Kullanımı</a></li>
 <li><a href="mod/mod_log_forensic.html">Apache Modülü mod_log_forensic</a></li>
 <li><a href="mod/mod_logio.html">Apache Modülü mod_logio</a></li>
 <li><a href="mod/mod_lua.html">Apache Modülü mod_lua</a></li>
+<li><a href="mod/mod_macro.html">Apache Modülü mod_macro</a></li>
 <li><a href="mod/mod_mime.html">Apache Modülü mod_mime</a></li>
 <li><a href="mod/mod_mime_magic.html">Apache Modülü mod_mime_magic</a></li>
 <li><a href="mod/mod_negotiation.html">Apache Modülü mod_negotiation</a></li>
@@ -332,8 +334,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/sitemap.html';
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br /><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a> altında lisanslıdır.</p>
-<p class="menu"><a href="./mod/">Modüller</a> | <a href="./mod/directives.html">Yönergeler</a> | <a href="http://wiki.apache.org/httpd/FAQ">SSS</a> | <a href="./glossary.html">Terimler</a> | <a href="./sitemap.html">Site Haritası</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br /><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a> altında lisanslıdır.</p>
+<p class="menu"><a href="./mod/">Modüller</a> | <a href="./mod/quickreference.html">Yönergeler</a> | <a href="http://wiki.apache.org/httpd/FAQ">SSS</a> | <a href="./glossary.html">Terimler</a> | <a href="./sitemap.html">Site Haritası</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

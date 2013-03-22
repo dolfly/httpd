@@ -80,6 +80,7 @@ APR_HOOK_STRUCT(
            APR_HOOK_LINK(quick_handler)
            APR_HOOK_LINK(optional_fn_retrieve)
            APR_HOOK_LINK(test_config)
+           APR_HOOK_LINK(pre_htaccess)
 )
 
 AP_IMPLEMENT_HOOK_RUN_ALL(int, header_parser,
@@ -170,6 +171,9 @@ AP_IMPLEMENT_HOOK_RUN_FIRST(int, handler, (request_rec *r),
 
 AP_IMPLEMENT_HOOK_RUN_FIRST(int, quick_handler, (request_rec *r, int lookup),
                             (r, lookup), DECLINED)
+
+AP_IMPLEMENT_HOOK_RUN_FIRST(int, pre_htaccess, (request_rec *r, const char *filename),
+                            (r, filename), DECLINED)
 
 /* hooks with no args are implemented last, after disabling APR hook probes */
 #if defined(APR_HOOK_PROBES_ENABLED)
@@ -599,7 +603,8 @@ AP_DECLARE(const char *) ap_add_module(module *m, apr_pool_t *p,
             len -= slen;
         }
 
-        ap_module_short_names[m->module_index] = strdup(sym_name);
+        ap_module_short_names[m->module_index] = ap_malloc(len + 1);
+        memcpy(ap_module_short_names[m->module_index], sym_name, len);
         ap_module_short_names[m->module_index][len] = '\0';
         merger_func_cache[m->module_index] = m->merge_dir_config;
     }
@@ -623,8 +628,9 @@ AP_DECLARE(const char *) ap_add_module(module *m, apr_pool_t *p,
 
     /* We cannot fix the string in-place, because it's const */
     if (m->name[strlen(m->name)-1] == ')') {
-        char *tmp = strdup(m->name); /* FIXME: memory leak, albeit a small one */
-        tmp[strlen(tmp)-1] = '\0';
+        char *tmp = ap_malloc(strlen(m->name)); /* FIXME: memory leak, albeit a small one */
+        memcpy(tmp, m->name, strlen(m->name)-1);
+        tmp[strlen(m->name)-1] = '\0';
         m->name = tmp;
     }
 #endif /*_OSD_POSIX*/
@@ -976,12 +982,20 @@ static const char *invoke_cmd(const command_rec *cmd, cmd_parms *parms,
         return cmd->AP_TAKE3(parms, mconfig, w, w2, w3);
 
     case ITERATE:
-        while (*(w = ap_getword_conf(parms->pool, &args)) != '\0') {
+        w = ap_getword_conf(parms->pool, &args);
+        
+        if (*w == '\0')
+            return apr_pstrcat(parms->pool, cmd->name,
+                               " requires at least one argument",
+                               cmd->errmsg ? ", " : NULL, cmd->errmsg, NULL);
 
+        while (*w != '\0') {
             errmsg = cmd->AP_TAKE1(parms, mconfig, w);
 
             if (errmsg && strcmp(errmsg, DECLINE_CMD) != 0)
                 return errmsg;
+
+            w = ap_getword_conf(parms->pool, &args);
         }
 
         return errmsg;
@@ -1799,6 +1813,9 @@ AP_DECLARE(const char *) ap_process_resource_config(server_rec *s,
 
     if (error) {
         if (parms.err_directive)
+            /* note: this may not be a 'syntactic' error per se.
+             * should it rather be "Configuration error ..."?
+             */
             return apr_psprintf(p, "Syntax error on line %d of %s: %s",
                                 parms.err_directive->line_num,
                                 parms.err_directive->filename, error);
@@ -2013,7 +2030,7 @@ AP_DECLARE(const char *) ap_process_fnmatch_configs(server_rec *s,
     }
 
     if (!apr_fnmatch_test(fname)) {
-        return ap_process_resource_config(s, fname, conftree, p, ptemp);
+        return process_resource_config_nofnmatch(s, fname, conftree, p, ptemp, 0, optional);
     }
     else {
         apr_status_t status;
@@ -2078,6 +2095,7 @@ AP_CORE_DECLARE(int) ap_parse_htaccess(ap_conf_vector_t **result,
     struct htaccess_result *new;
     ap_conf_vector_t *dc = NULL;
     apr_status_t status;
+    int rc;
 
     /* firstly, search cache */
     for (cache = r->htaccess; cache != NULL; cache = cache->next) {
@@ -2104,6 +2122,10 @@ AP_CORE_DECLARE(int) ap_parse_htaccess(ap_conf_vector_t **result,
          */
         filename = ap_make_full_path(r->pool, d,
                                      ap_getword_conf(r->pool, &access_name));
+        rc = ap_run_pre_htaccess(r, filename);
+        if (rc != DECLINED && rc != OK) {
+            return rc;
+        }
         status = ap_pcfg_openfile(&f, r->pool, filename);
 
         if (status == APR_SUCCESS) {
