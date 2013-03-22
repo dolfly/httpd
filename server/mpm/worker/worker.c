@@ -58,7 +58,6 @@
 #include "http_core.h"          /* for get_remote_host */
 #include "http_connection.h"
 #include "ap_mpm.h"
-#include "pod.h"
 #include "mpm_common.h"
 #include "ap_listen.h"
 #include "scoreboard.h"
@@ -189,7 +188,7 @@ typedef struct {
 
 #define ID_FROM_CHILD_THREAD(c, t)    ((c * thread_limit) + t)
 
-static ap_worker_pod_t *pod;
+static ap_pod_t *pod;
 
 /* The worker MPM respects a couple of runtime flags that can aid
  * in debugging. Setting the -DNO_DETACH flag will prevent the root process
@@ -1276,7 +1275,13 @@ static void child_main(int child_num_arg)
     apr_threadattr_detach_set(thread_attr, 0);
 
     if (ap_thread_stacksize != 0) {
-        apr_threadattr_stacksize_set(thread_attr, ap_thread_stacksize);
+        rv = apr_threadattr_stacksize_set(thread_attr, ap_thread_stacksize);
+        if (rv != APR_SUCCESS && rv != APR_ENOTIMPL) {
+            ap_log_error(APLOG_MARK, APLOG_WARNING, rv, ap_server_conf, APLOGNO(02435)
+                         "WARNING: ThreadStackSize of %" APR_SIZE_T_FMT " is "
+                         "inappropriate, using default", 
+                         ap_thread_stacksize);
+        }
     }
 
     ts->threads = threads;
@@ -1330,24 +1335,24 @@ static void child_main(int child_num_arg)
         apr_signal(SIGTERM, dummy_signal_handler);
         /* Watch for any messages from the parent over the POD */
         while (1) {
-            rv = ap_worker_pod_check(pod);
-            if (rv == AP_NORESTART) {
+            rv = ap_mpm_podx_check(pod);
+            if (rv == AP_MPM_PODX_NORESTART) {
                 /* see if termination was triggered while we slept */
                 switch(terminate_mode) {
                 case ST_GRACEFUL:
-                    rv = AP_GRACEFUL;
+                    rv = AP_MPM_PODX_GRACEFUL;
                     break;
                 case ST_UNGRACEFUL:
-                    rv = AP_RESTART;
+                    rv = AP_MPM_PODX_RESTART;
                     break;
                 }
             }
-            if (rv == AP_GRACEFUL || rv == AP_RESTART) {
+            if (rv == AP_MPM_PODX_GRACEFUL || rv == AP_MPM_PODX_RESTART) {
                 /* make sure the start thread has finished;
                  * signal_threads() and join_workers depend on that
                  */
                 join_start_thread(start_thread_id);
-                signal_threads(rv == AP_GRACEFUL ? ST_GRACEFUL : ST_UNGRACEFUL);
+                signal_threads(rv == AP_MPM_PODX_GRACEFUL ? ST_GRACEFUL : ST_UNGRACEFUL);
                 break;
             }
         }
@@ -1572,7 +1577,7 @@ static void perform_idle_server_maintenance(void)
 
     if (idle_thread_count > max_spare_threads) {
         /* Kill off one child */
-        ap_worker_pod_signal(pod, TRUE);
+        ap_mpm_podx_signal(pod, AP_MPM_PODX_GRACEFUL);
         retained->idle_spawn_rate = 1;
     }
     else if (idle_thread_count < min_spare_threads) {
@@ -1827,7 +1832,7 @@ static int worker_run(apr_pool_t *_pconf, apr_pool_t *plog, server_rec *s)
         /* Time to shut down:
          * Kill child processes, tell them to call child_exit, etc...
          */
-        ap_worker_pod_killpg(pod, ap_daemons_limit, FALSE);
+        ap_mpm_podx_killpg(pod, ap_daemons_limit, AP_MPM_PODX_RESTART);
         ap_reclaim_child_processes(1, /* Start with SIGTERM */
                                    worker_note_child_killed);
 
@@ -1848,7 +1853,7 @@ static int worker_run(apr_pool_t *_pconf, apr_pool_t *plog, server_rec *s)
 
         /* Close our listeners, and then ask our children to do same */
         ap_close_listeners();
-        ap_worker_pod_killpg(pod, ap_daemons_limit, TRUE);
+        ap_mpm_podx_killpg(pod, ap_daemons_limit, AP_MPM_PODX_GRACEFUL);
         ap_relieve_child_processes(worker_note_child_killed);
 
         if (!child_fatal) {
@@ -1888,7 +1893,7 @@ static int worker_run(apr_pool_t *_pconf, apr_pool_t *plog, server_rec *s)
          * way, try and make sure that all of our processes are
          * really dead.
          */
-        ap_worker_pod_killpg(pod, ap_daemons_limit, FALSE);
+        ap_mpm_podx_killpg(pod, ap_daemons_limit, AP_MPM_PODX_RESTART);
         ap_reclaim_child_processes(1, worker_note_child_killed);
 
         return DONE;
@@ -1913,7 +1918,7 @@ static int worker_run(apr_pool_t *_pconf, apr_pool_t *plog, server_rec *s)
         ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, ap_server_conf, APLOGNO(00297)
                      AP_SIG_GRACEFUL_STRING " received.  Doing graceful restart");
         /* wake up the children...time to die.  But we'll have more soon */
-        ap_worker_pod_killpg(pod, ap_daemons_limit, TRUE);
+        ap_mpm_podx_killpg(pod, ap_daemons_limit, AP_MPM_PODX_GRACEFUL);
 
 
         /* This is mostly for debugging... so that we know what is still
@@ -1926,7 +1931,7 @@ static int worker_run(apr_pool_t *_pconf, apr_pool_t *plog, server_rec *s)
          * and a SIGHUP, we may as well use the same signal, because some user
          * pthreads are stealing signals from us left and right.
          */
-        ap_worker_pod_killpg(pod, ap_daemons_limit, FALSE);
+        ap_mpm_podx_killpg(pod, ap_daemons_limit, AP_MPM_PODX_RESTART);
 
         ap_reclaim_child_processes(1, /* Start with SIGTERM */
                                    worker_note_child_killed);
@@ -1962,7 +1967,7 @@ static int worker_open_logs(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, 
     }
 
     if (!one_process) {
-        if ((rv = ap_worker_pod_open(pconf, &pod))) {
+        if ((rv = ap_mpm_podx_open(pconf, &pod))) {
             ap_log_error(APLOG_MARK, APLOG_CRIT | level_flags, rv,
                          (startup ? NULL : s),
                          "could not open pipe-of-death");

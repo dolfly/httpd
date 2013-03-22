@@ -27,6 +27,7 @@
 
 #include "apr_proc_mutex.h"
 #include "ap_listen.h"
+#include "scoreboard.h"
 
 /* From service.c: */
 
@@ -71,6 +72,7 @@ extern module AP_MODULE_DECLARE_DATA mpm_winnt_module;
 extern int ap_threads_per_child;
 
 extern DWORD my_pid;
+extern volatile ap_generation_t my_generation;
 extern apr_proc_mutex_t *start_mutex;
 extern HANDLE exit_event;
 
@@ -79,8 +81,6 @@ extern OSVERSIONINFO osver;
 extern DWORD stack_res_flag;
 
 extern void clean_child_exit(int);
-
-void setup_signal_names(char *prefix);
 
 typedef enum {
     SIGNAL_PARENT_SHUTDOWN,

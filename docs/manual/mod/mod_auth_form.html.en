@@ -15,7 +15,7 @@
 <link href="../images/favicon.ico" rel="shortcut icon" /></head>
 <body>
 <div id="page-header">
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
 <p class="apache">Apache HTTP Server Version 2.5</p>
 <img alt="" src="../images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div>
@@ -149,13 +149,14 @@ SessionCryptoPassphrase secret
       directive. Typically this login page will contain an HTML form, asking the user to
       provide their usename and password.</p>
 
-      <div class="example"><h3>Example login form</h3><p><code>
-        &lt;form method="POST" action="/dologin.html"&gt;<br />
-        Username: &lt;input type="text" name="httpd_username" value="" /&gt;<br />
-        Password: &lt;input type="password" name="httpd_password" value="" /&gt;<br />
-        &lt;input type="submit" name="login" value="Login" /&gt;<br />
-        &lt;/form&gt;<br />
-      </code></p></div>
+      <div class="example"><h3>Example login form</h3><pre class="prettyprint lang-html">
+&lt;form method="POST" action="/dologin.html"&gt;
+  Username: &lt;input type="text" name="httpd_username" value="" /&gt;
+  Password: &lt;input type="password" name="httpd_password" value="" /&gt;
+  &lt;input type="submit" name="login" value="Login" /&gt;
+&lt;/form&gt;
+        </pre>
+</div>
 
       <p>The part that does the actual login is handled by the <var>form-login-handler</var>.
       The action of the form should point at this handler, which is configured within
@@ -187,16 +188,15 @@ SessionCryptoPassphrase secret
       form, as in the example below. As a result, the same <var>form-login-handler</var> can be
       reused for different areas of a website.</p>
 
-      <div class="example"><h3>Example login form with location</h3><p><code>
-        &lt;form method="POST" action="/dologin.html"&gt;<br />
-        <span class="indent">
-          Username: &lt;input type="text" name="httpd_username" value="" /&gt;<br />
-          Password: &lt;input type="password" name="httpd_password" value="" /&gt;<br />
-          &lt;input type="submit" name="login" value="Login" /&gt;<br />
-          &lt;input type="hidden" name="httpd_location" value="http://example.com/success.html" /&gt;<br />
-        </span>
-        &lt;/form&gt;<br />
-      </code></p></div>
+      <div class="example"><h3>Example login form with location</h3><pre class="prettyprint lang-html">
+&lt;form method="POST" action="/dologin.html"&gt;
+  Username: &lt;input type="text" name="httpd_username" value="" /&gt;
+  Password: &lt;input type="password" name="httpd_password" value="" /&gt;
+  &lt;input type="submit" name="login" value="Login" /&gt;
+  &lt;input type="hidden" name="httpd_location" value="http://example.com/success.html" /&gt;
+&lt;/form&gt;
+        </pre>
+</div>
 
     </div><div class="top"><a href="#page-header"><img alt="top" src="../images/up.gif" /></a></div>
 <div class="section">
@@ -245,15 +245,14 @@ SessionCryptoPassphrase secret
       the original protected URL, without the page having to know what that
       URL is.</p>
 
-      <div class="example"><h3>Example inline login form</h3><p><code>
-        &lt;form method="POST" <strong>action=""</strong>&gt;<br />
-        <span class="indent">
-          Username: &lt;input type="text" name="httpd_username" value="" /&gt;<br />
-          Password: &lt;input type="password" name="httpd_password" value="" /&gt;<br />
-          &lt;input type="submit" name="login" value="Login" /&gt;<br />
-        </span>
-        &lt;/form&gt;<br />
-      </code></p></div>
+      <div class="example"><h3>Example inline login form</h3><pre class="prettyprint lang-html">
+&lt;form method="POST" <strong>action=""</strong>&gt;
+  Username: &lt;input type="text" name="httpd_username" value="" /&gt;
+  Password: &lt;input type="password" name="httpd_password" value="" /&gt;
+  &lt;input type="submit" name="login" value="Login" /&gt;
+&lt;/form&gt;
+</pre>
+</div>
 
       <p>When the end user has filled in their login details, the form will make
       an HTTP POST request to the original password protected URL.
@@ -281,18 +280,17 @@ SessionCryptoPassphrase secret
       <p>To enable body preservation, add three additional fields to the login form as
       per the example below.</p>
 
-      <div class="example"><h3>Example with body preservation</h3><p><code>
-        &lt;form method="POST" action=""&gt;<br />
-        <span class="indent">
-          Username: &lt;input type="text" name="httpd_username" value="" /&gt;<br />
-          Password: &lt;input type="password" name="httpd_password" value="" /&gt;<br />
-          &lt;input type="submit" name="login" value="Login" /&gt;<br />
-          <strong>&lt;input type="hidden" name="httpd_method" value="POST" /&gt;<br />
-          &lt;input type="hidden" name="httpd_mimetype" value="application/x-www-form-urlencoded" /&gt;<br />
-          &lt;input type="hidden" name="httpd_body" value="name1=value1&amp;name2=value2" /&gt;</strong><br />
-        </span>
-        &lt;/form&gt;
-      </code></p></div>
+      <div class="example"><h3>Example with body preservation</h3><pre class="prettyprint lang-html">
+&lt;form method="POST" action=""&gt;
+  Username: &lt;input type="text" name="httpd_username" value="" /&gt;
+  Password: &lt;input type="password" name="httpd_password" value="" /&gt;
+  &lt;input type="submit" name="login" value="Login" /&gt;
+  <br />  <strong>&lt;input type="hidden" name="httpd_method" value="POST" /&gt;
+  &lt;input type="hidden" name="httpd_mimetype" value="application/x-www-form-urlencoded" /&gt;
+  &lt;input type="hidden" name="httpd_body" value="name1=value1&amp;name2=value2" /&gt;</strong><br />
+&lt;/form&gt;
+        </pre>
+</div>
 
       <p>How the method, mimetype and body of the original request are embedded within the
       login form will depend on the platform and technology being used within the website.
@@ -426,7 +424,7 @@ lower level modules</td></tr>
     <p>The <code class="directive"><a href="#authformdisablenostore">AuthFormDisableNoStore</a></code> flag
     disables the sending of a <code>Cache-Control no-store</code> header with the
     error 401 page returned when the user is not yet logged in. The purpose of the header
-    is to make it difficult for an ecmascript application to attempt to resubmit the
+    is to make it difficult for an <code>ecmascript</code> application to attempt to resubmit the
     login form, and reveal the username and password to the backend application. Disable
     at your own risk.</p>
 
@@ -479,9 +477,10 @@ lower level modules</td></tr>
 <tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Available in Apache HTTP Server 2.3.0 and later</td></tr>
 </table>
     <p>The <code class="directive"><a href="#authformloginrequiredlocation">AuthFormLoginRequiredLocation</a></code> directive
-    specifies the URL to redirect to should the user not be authorised to view a page. By default,
-    if a user is not authorised to view a page, the HTTP response code <code>HTTP_UNAUTHORIZED</code>
-    will be returned with the page specified by the
+    specifies the URL to redirect to should the user not be authorised to view a page. The value
+    is parsed using the <a href="../expr.html">ap_expr</a> parser before being sent to the client.
+    By default, if a user is not authorised to view a page, the HTTP response code
+    <code>HTTP_UNAUTHORIZED</code> will be returned with the page specified by the
     <code class="directive"><a href="../mod/core.html#errordocument">ErrorDocument</a></code> directive. This directive overrides this
     default.</p>
 
@@ -501,9 +500,10 @@ lower level modules</td></tr>
 <tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Available in Apache HTTP Server 2.3.0 and later</td></tr>
 </table>
     <p>The <code class="directive"><a href="#authformloginsuccesslocation">AuthFormLoginSuccessLocation</a></code> directive
-    specifies the URL to redirect to should the user have logged in successfully. This directive
-    can be overridden if a form field has been defined containing another URL using the
-    <code class="directive"><a href="#authformlocation">AuthFormLocation</a></code> directive.</p>
+    specifies the URL to redirect to should the user have logged in successfully. The value is
+    parsed using the <a href="../expr.html">ap_expr</a> parser before being sent to the client.
+    This directive can be overridden if a form field has been defined containing another URL
+    using the <code class="directive"><a href="#authformlocation">AuthFormLocation</a></code> directive.</p>
 
     <p>Use this directive if you have a dedicated login URL, and you have not embedded the
     destination page in the login form.</p>
@@ -522,7 +522,9 @@ lower level modules</td></tr>
 <tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>Available in Apache HTTP Server 2.3.0 and later</td></tr>
 </table>
     <p>The <code class="directive"><a href="#authformlogoutlocation">AuthFormLogoutLocation</a></code> directive
-    specifies the URL of a page on the server to redirect to should the user attempt to log out.</p>
+    specifies the URL of a page on the server to redirect to should the user attempt to log
+    out. The value is parsed using the <a href="../expr.html">ap_expr</a> parser before
+    being sent to the client.</p>
 
     <p>When a URI is accessed that is served by the handler <code>form-logout-handler</code>,
     the page specified by this directive will be shown to the end user. For example:</p>
@@ -678,7 +680,7 @@ lower level modules</td></tr>
 <div class="directive-section"><h2><a name="AuthFormSize" id="AuthFormSize">AuthFormSize</a> <a name="authformsize" id="authformsize">Directive</a></h2>
 <table class="directive">
 <tr><th><a href="directive-dict.html#Description">Description:</a></th><td>The largest size of the form in bytes that will be parsed for the login details</td></tr>
-<tr><th><a href="directive-dict.html#Syntax">Syntax:</a></th><td><code>AuthFormBody <var>size</var></code></td></tr>
+<tr><th><a href="directive-dict.html#Syntax">Syntax:</a></th><td><code>AuthFormSize <var>size</var></code></td></tr>
 <tr><th><a href="directive-dict.html#Default">Default:</a></th><td><code>8192</code></td></tr>
 <tr><th><a href="directive-dict.html#Context">Context:</a></th><td>directory</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Base</td></tr>
@@ -737,8 +739,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/mod/mod_auth_form.
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

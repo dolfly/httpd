@@ -149,12 +149,20 @@ AC_DEFUN(APACHE_TYPE_RLIM_T, [
   fi
 ])
 
+dnl the list of build variables which are available for customization on a
+dnl per module subdir basis (to be inserted into modules.mk with a "MOD_"
+dnl prefix, i.e. MOD_CFLAGS etc.). Used in APACHE_MODPATH_{INIT,FINISH}.
+define(mod_buildvars, [CFLAGS CXXFLAGS CPPFLAGS LDFLAGS LIBS INCLUDES])
+dnl
 dnl APACHE_MODPATH_INIT(modpath)
 AC_DEFUN(APACHE_MODPATH_INIT,[
   current_dir=$1
   modpath_current=modules/$1
   modpath_static=
   modpath_shared=
+  for var in mod_buildvars; do
+    eval MOD_$var=
+  done
   test -d $1 || $srcdir/build/mkdir.sh $modpath_current
   > $modpath_current/modules.mk
 ])dnl
@@ -163,6 +171,11 @@ AC_DEFUN(APACHE_MODPATH_FINISH,[
   echo "DISTCLEAN_TARGETS = modules.mk" >> $modpath_current/modules.mk
   echo "static = $modpath_static" >> $modpath_current/modules.mk
   echo "shared = $modpath_shared" >> $modpath_current/modules.mk
+  for var in mod_buildvars; do
+    if eval val=\"\$MOD_$var\"; test -n "$val"; then
+      echo "MOD_$var = $val" >> $modpath_current/modules.mk
+    fi
+  done
   if test ! -z "$modpath_static" -o ! -z "$modpath_shared"; then
     MODULE_DIRS="$MODULE_DIRS $current_dir"
   else
@@ -204,6 +217,27 @@ EOF
     fi
   fi
 ])dnl
+dnl Same as APACHE_MODPATH_INIT/FINISH but for MPMs
+dnl APACHE_MPMPATH_INIT(mpmpath)
+AC_DEFUN(APACHE_MPMPATH_INIT,[
+  current_dir=$1
+  modpath_current=server/mpm/$1
+  modpath_static=
+  modpath_shared=
+  for var in mod_buildvars; do
+    eval MOD_$var=
+  done
+  test -d $1 || $srcdir/build/mkdir.sh $modpath_current
+  > $modpath_current/modules.mk
+])dnl
+dnl
+AC_DEFUN(APACHE_MPMPATH_FINISH,[
+  for var in mod_buildvars; do
+    if eval val=\"\$MOD_$var\"; test -n "$val"; then
+      echo "MOD_$var = $val" >> $modpath_current/modules.mk
+    fi
+  done
+])dnl
 
 dnl
 dnl APACHE_MPM_MODULE(name[, shared[, objects[, config[, path[, libs]]]]])
@@ -240,7 +274,7 @@ AC_DEFUN(APACHE_MPM_MODULE,[
         if test -z "$2"; then
             APR_ADDTO(AP_LIBS, [$6])
             libname="lib$1.la"
-            cat >$mpmpath/modules.mk<<EOF
+            cat >>$mpmpath/modules.mk<<EOF
 $libname: $objects
 	\$(MOD_LINK) $objects
 DISTCLEAN_TARGETS = modules.mk
@@ -251,7 +285,7 @@ EOF
             apache_need_shared=yes
             libname="mod_mpm_$1.la"
             shobjects=`echo $objects | sed 's/\.lo/.slo/g'`
-            cat >$mpmpath/modules.mk<<EOF
+            cat >>$mpmpath/modules.mk<<EOF
 $libname: $shobjects
 	\$(SH_LINK) -rpath \$(libexecdir) -module -avoid-version $objects $6
 DISTCLEAN_TARGETS = modules.mk
@@ -301,22 +335,15 @@ AC_DEFUN(APACHE_MODULE,[
   AC_ARG_ENABLE(translit($1,_,-),APACHE_HELP_STRING(optname(),$2),force_$1=$enableval,enable_$1=ifelse($5,,maybe-all,$5))
   undefine([optname])dnl
   _apmod_extra_msg=""
-  dnl When --enable-modules=most or --enable-modules=(really)all is set and the
-  dnl module was not explicitly requested, allow a module to disable itself if
+  dnl If the module was not explicitly requested, allow it to disable itself if
   dnl its pre-reqs fail.
   case "$enable_$1" in
     yes|static|shared)
       _apmod_required="yes"
       ;;
     *)
-      case "$module_selection" in
-      reallyall|all|most)
-        _apmod_required="no"
-        ;;
-      *)
-        _apmod_required="yes"
-        ;;
-      esac
+      _apmod_required="no"
+      ;;
   esac
   if test "$enable_$1" = "static"; then
     enable_$1=static
@@ -480,7 +507,7 @@ AC_DEFUN(APACHE_CHECK_OPENSSL,[
 
     dnl Determine the OpenSSL base directory, if any
     AC_MSG_CHECKING([for user-provided OpenSSL base directory])
-    AC_ARG_WITH(ssl, APACHE_HELP_STRING(--with-ssl=DIR,OpenSSL base directory), [
+    AC_ARG_WITH(ssl, APACHE_HELP_STRING(--with-ssl=PATH,OpenSSL installation directory), [
       dnl If --with-ssl specifies a directory, we use that directory
       if test "x$withval" != "xyes" -a "x$withval" != "x"; then
         dnl This ensures $withval is actually a directory and that it is absolute
@@ -497,53 +524,49 @@ AC_DEFUN(APACHE_CHECK_OPENSSL,[
     saved_CPPFLAGS="$CPPFLAGS"
     saved_LIBS="$LIBS"
     saved_LDFLAGS="$LDFLAGS"
-    SSL_LIBS=""
 
-    dnl See if we've been given a development OpenSSL (lib does not exist)
-    if test ! -d "$ap_openssl_base/lib"; then
-      AC_MSG_WARN([Using development version of OpenSSL])
-      dnl we need to prepend the directories to override the system version
-      CPPFLAGS="-I$ap_openssl_base/include $CPPFLAGS"
-      INCLUDES="-I$ap_openssl_base/include $INCLUDES"
-      LDFLAGS="-L$ap_openssl_base $LDFLAGS"
-      dnl naughty, but easier than the alternatives
-      saved_LDFLAGS="$LDFLAGS"
-      SSL_LIBS="-L$ap_openssl_base"
-    else
-
-      dnl Before doing anything else, load in pkg-config variables
-      if test -n "$PKGCONFIG"; then
-        saved_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
-        if test "x$ap_openssl_base" != "x" -a \
-                -f "${ap_openssl_base}/lib/pkgconfig/openssl.pc"; then
-          dnl Ensure that the given path is used by pkg-config too, otherwise
-          dnl the system openssl.pc might be picked up instead.
-          PKG_CONFIG_PATH="${ap_openssl_base}/lib/pkgconfig${PKG_CONFIG_PATH+:}${PKG_CONFIG_PATH}"
-          export PKG_CONFIG_PATH
-        fi
-        ap_openssl_libs="`$PKGCONFIG --libs-only-l openssl 2>&1`"
-        if test $? -eq 0; then
-          ap_openssl_found="yes"
-          pkglookup="`$PKGCONFIG --cflags-only-I openssl`"
-          APR_ADDTO(CPPFLAGS, [$pkglookup])
-          APR_ADDTO(INCLUDES, [$pkglookup])
-          pkglookup="`$PKGCONFIG --libs-only-L --libs-only-other openssl`"
-          APR_ADDTO(LDFLAGS, [$pkglookup])
-          APR_ADDTO(SSL_LIBS, [$pkglookup])
-        fi
-        PKG_CONFIG_PATH="$saved_PKG_CONFIG_PATH"
+    dnl Before doing anything else, load in pkg-config variables
+    if test -n "$PKGCONFIG"; then
+      saved_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
+      if test "x$ap_openssl_base" != "x" -a \
+              -f "${ap_openssl_base}/lib/pkgconfig/openssl.pc"; then
+        dnl Ensure that the given path is used by pkg-config too, otherwise
+        dnl the system openssl.pc might be picked up instead.
+        PKG_CONFIG_PATH="${ap_openssl_base}/lib/pkgconfig${PKG_CONFIG_PATH+:}${PKG_CONFIG_PATH}"
+        export PKG_CONFIG_PATH
       fi
-
-      dnl fall back to the user-supplied directory if not found via pkg-config
-      if test "x$ap_openssl_base" != "x" -a "x$ap_openssl_found" = "x"; then
-        APR_ADDTO(CPPFLAGS, [-I$ap_openssl_base/include])
-        APR_ADDTO(INCLUDES, [-I$ap_openssl_base/include])
-        APR_ADDTO(LDFLAGS, [-L$ap_openssl_base/lib])
-        APR_ADDTO(SSL_LIBS, [-L$ap_openssl_base/lib])
-        if test "x$ap_platform_runtime_link_flag" != "x"; then
-          APR_ADDTO(LDFLAGS, [$ap_platform_runtime_link_flag$ap_openssl_base/lib])
-          APR_ADDTO(SSL_LIBS, [$ap_platform_runtime_link_flag$ap_openssl_base/lib])
+      AC_ARG_ENABLE(ssl-staticlib-deps,APACHE_HELP_STRING(--enable-ssl-staticlib-deps,[link mod_ssl with dependencies of OpenSSL's static libraries (as indicated by "pkg-config --static"). Must be specified in addition to --enable-ssl.]), [
+        if test "$enableval" = "yes"; then
+          PKGCONFIG_LIBOPTS="--static"
         fi
+      ])
+      ap_openssl_libs="`$PKGCONFIG $PKGCONFIG_LIBOPTS --libs-only-l --silence-errors openssl`"
+      if test $? -eq 0; then
+        ap_openssl_found="yes"
+        pkglookup="`$PKGCONFIG --cflags-only-I openssl`"
+        APR_ADDTO(CPPFLAGS, [$pkglookup])
+        APR_ADDTO(MOD_CFLAGS, [$pkglookup])
+        APR_ADDTO(ab_CFLAGS, [$pkglookup])
+        pkglookup="`$PKGCONFIG $PKGCONFIG_LIBOPTS --libs-only-L openssl`"
+        APR_ADDTO(LDFLAGS, [$pkglookup])
+        APR_ADDTO(MOD_LDFLAGS, [$pkglookup])
+        pkglookup="`$PKGCONFIG $PKGCONFIG_LIBOPTS --libs-only-other openssl`"
+        APR_ADDTO(LDFLAGS, [$pkglookup])
+        APR_ADDTO(MOD_LDFLAGS, [$pkglookup])
+      fi
+      PKG_CONFIG_PATH="$saved_PKG_CONFIG_PATH"
+    fi
+
+    dnl fall back to the user-supplied directory if not found via pkg-config
+    if test "x$ap_openssl_base" != "x" -a "x$ap_openssl_found" = "x"; then
+      APR_ADDTO(CPPFLAGS, [-I$ap_openssl_base/include])
+      APR_ADDTO(MOD_CFLAGS, [-I$ap_openssl_base/include])
+      APR_ADDTO(ab_CFLAGS, [-I$ap_openssl_base/include])
+      APR_ADDTO(LDFLAGS, [-L$ap_openssl_base/lib])
+      APR_ADDTO(MOD_LDFLAGS, [-L$ap_openssl_base/lib])
+      if test "x$ap_platform_runtime_link_flag" != "x"; then
+        APR_ADDTO(LDFLAGS, [$ap_platform_runtime_link_flag$ap_openssl_base/lib])
+        APR_ADDTO(MOD_LDFLAGS, [$ap_platform_runtime_link_flag$ap_openssl_base/lib])
       fi
     fi
 
@@ -560,10 +583,12 @@ AC_DEFUN(APACHE_CHECK_OPENSSL,[
       [AC_MSG_RESULT(FAILED)])
 
     if test "x$ac_cv_openssl" = "xyes"; then
-      ap_openssl_libs="-lssl -lcrypto `$apr_config --libs`"
-      APR_ADDTO(SSL_LIBS, [$ap_openssl_libs])
+      ap_openssl_libs="${ap_openssl_libs:--lssl -lcrypto} `$apr_config --libs`"
+      APR_ADDTO(MOD_LDFLAGS, [$ap_openssl_libs])
       APR_ADDTO(LIBS, [$ap_openssl_libs])
-      APACHE_SUBST(SSL_LIBS)
+      APR_SETVAR(ab_LDFLAGS, [$MOD_LDFLAGS])
+      APACHE_SUBST(ab_CFLAGS)
+      APACHE_SUBST(ab_LDFLAGS)
 
       dnl Run library and function checks
       liberrors=""
@@ -598,7 +623,7 @@ AC_DEFUN([APACHE_CHECK_SERF], [
     ac_cv_serf=no
     serf_prefix=/usr
     SERF_LIBS=""
-    AC_ARG_WITH(serf, APACHE_HELP_STRING([--with-serf=PREFIX],
+    AC_ARG_WITH(serf, APACHE_HELP_STRING([--with-serf=PATH],
                                     [Serf client library]),
     [
         if test "$withval" = "yes" ; then
@@ -624,7 +649,7 @@ AC_DEFUN([APACHE_CHECK_SERF], [
   if test "$ac_cv_serf" = "yes"; then
     AC_DEFINE(HAVE_SERF, 1, [Define if libserf is available])
     APR_SETVAR(SERF_LIBS, [-L$serf_prefix/lib -lserf-0])
-    APR_ADDTO(INCLUDES, [-I$serf_prefix/include/serf-0])
+    APR_ADDTO(MOD_INCLUDES, [-I$serf_prefix/include/serf-0])
   fi
 ])
 

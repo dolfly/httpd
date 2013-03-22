@@ -686,11 +686,12 @@ reinit: /* target of data or connect upon too many AcceptEx failures */
             }
         }
 
-        sockinfo.os_sock = &context->accept_socket;
-        sockinfo.local   = context->sa_server;
-        sockinfo.remote  = context->sa_client;
-        sockinfo.family  = context->sa_server->sa_family;
-        sockinfo.type    = SOCK_STREAM;
+        sockinfo.os_sock  = &context->accept_socket;
+        sockinfo.local    = context->sa_server;
+        sockinfo.remote   = context->sa_client;
+        sockinfo.family   = context->sa_server->sa_family;
+        sockinfo.type     = SOCK_STREAM;
+        sockinfo.protocol = IPPROTO_TCP;
         /* Restore the state corresponding to apr_os_sock_make's default
          * assumption of timeout -1 (really, a flaw of os_sock_make and
          * os_sock_put that it does not query to determine ->timeout).
@@ -797,7 +798,7 @@ apr_status_t winnt_insert_network_bucket(conn_rec *c,
  */
 static DWORD __stdcall worker_main(void *thread_num_val)
 {
-    apr_thread_t *thd = NULL;
+    apr_thread_t *thd;
     apr_os_thread_t osthd;
     static int requests_this_child = 0;
     winnt_conn_ctx_t *context = NULL;
@@ -809,7 +810,6 @@ static DWORD __stdcall worker_main(void *thread_num_val)
     apr_int32_t disconnected;
 
     osthd = apr_os_thread_current();
-    apr_os_thread_put(&thd, &osthd, pchild);
 
     while (1) {
 
@@ -847,6 +847,8 @@ static DWORD __stdcall worker_main(void *thread_num_val)
             continue;
         }
 
+        thd = NULL;
+        apr_os_thread_put(&thd, &osthd, context->ptrans);
         c->current_thread = thd;
 
         /* follow ap_process_connection(c, context->sock) logic
@@ -1015,10 +1017,18 @@ void child_main(apr_pool_t *pconf)
     apr_thread_mutex_create(&child_lock, APR_THREAD_MUTEX_DEFAULT, pchild);
 
     while (1) {
+        int from_previous_generation = 0, starting_up = 0;
+
         for (i = 0; i < ap_threads_per_child; i++) {
             int *score_idx;
             int status = ap_scoreboard_image->servers[0][i].status;
             if (status != SERVER_GRACEFUL && status != SERVER_DEAD) {
+                if (ap_scoreboard_image->servers[0][i].generation != my_generation) {
+                    ++from_previous_generation;
+                }
+                else if (status == SERVER_STARTING) {
+                    ++starting_up;
+                }
                 continue;
             }
             ap_update_child_status_from_indexes(0, i, SERVER_STARTING, NULL);
@@ -1037,6 +1047,8 @@ void child_main(apr_pool_t *pconf)
                 ap_signal_parent(SIGNAL_PARENT_SHUTDOWN);
                 goto shutdown;
             }
+            ap_scoreboard_image->servers[0][i].pid = my_pid;
+            ap_scoreboard_image->servers[0][i].generation = my_generation;
             threads_created++;
             /* Save the score board index in ht keyed to the thread handle.
              * We need this when cleaning up threads down below...
@@ -1062,6 +1074,9 @@ void child_main(apr_pool_t *pconf)
         }
         /* wait for previous generation to clean up an entry in the scoreboard
          */
+        ap_log_error(APLOG_MARK, APLOG_TRACE2, 0, ap_server_conf,
+                     "Child: %d threads starting up, %d remain from a prior generation",
+                     starting_up, from_previous_generation);
         apr_sleep(1 * APR_USEC_PER_SEC);
     }
 

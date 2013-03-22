@@ -398,14 +398,35 @@
  * 20120211.3 (2.5.0-dev)  Add forcerecovery to proxy_balancer_shared struct
  * 20120211.4 (2.5.0-dev)  Add missing HTTP status codes registered with IANA.
  * 20120724.0 (2.5.0-dev)  Add hostname argument to ap_proxy_checkproxyblock.
+ * 20120724.1 (2.5.0-dev)  Add post_perdir_config hook.
+ * 20120724.2 (2.5.0-dev)  Add fgrab slotmem function to struct
+ * 20120724.3 (2.5.0-dev)  Add bal_persist, inherit to proxy_server_conf
+ * 20120724.4 (2.5.0-dev)  Add dirwalk_stat hook.
+ * 20120724.5 (2.5.0-dev)  Add ap_get_sload() and ap_get_loadavg().
+ * 20120724.6 (2.5.0-dev)  Add sticky_separator to proxy_balancer_shared struct.
+ * 20120724.7 (2.5.0-dev)  Add min_http_version/max_http_version to
+ *                         core_server_config
+ * 20120724.8 (2.5.0-dev)  Add conn_log_level to core_server_config
+ * 20120724.9 (2.5.0-dev)  Add ap_bin2hex()
+ * 20121222.0 (2.5.0-dev)  Remove min_http_version/max_http_version from
+ *                         core_server_config again, add http09_enable
+ * 20121222.1 (2.5.0-dev)  Add http_conformance to core_server_config,
+ *                         add ap_has_cntrl()
+ * 20121222.2 (2.5.0-dev)  Add ap_password_validate()
+ * 20121222.3 (2.5.0-dev)  Add ppinherit to proxy_server_conf
+ * 20121222.4 (2.5.0-dev)  Add uds_path to proxy_conn_rec
+ * 20121222.5 (2.5.0-dev)  Add "r" and "must_rebind" to util_ldap_connection_t
+ * 20121222.6 (2.5.0-dev)  Add ap_proxy_create_hdrbrgd() and
+ *                         ap_proxy_pass_brigade()
+ * 20121222.7 (2.5.0-dev)  Add ap_remove_input|output_filter_byhandle()
  */
 
 #define MODULE_MAGIC_COOKIE 0x41503235UL /* "AP25" */
 
 #ifndef MODULE_MAGIC_NUMBER_MAJOR
-#define MODULE_MAGIC_NUMBER_MAJOR 20120724
+#define MODULE_MAGIC_NUMBER_MAJOR 20121222
 #endif
-#define MODULE_MAGIC_NUMBER_MINOR 0                   /* 0...n */
+#define MODULE_MAGIC_NUMBER_MINOR 5                   /* 0...n */
 
 /**
  * Determine if the server's current MODULE_MAGIC_NUMBER is at least a

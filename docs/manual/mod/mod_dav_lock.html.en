@@ -15,7 +15,7 @@
 <link href="../images/favicon.ico" rel="shortcut icon" /></head>
 <body>
 <div id="page-header">
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
 <p class="apache">Apache HTTP Server Version 2.5</p>
 <img alt="" src="../images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div>
@@ -27,11 +27,10 @@
 <p><span>Available Languages: </span><a href="../en/mod/mod_dav_lock.html" title="English">&nbsp;en&nbsp;</a> |
 <a href="../ja/mod/mod_dav_lock.html" hreflang="ja" rel="alternate" title="Japanese">&nbsp;ja&nbsp;</a></p>
 </div>
-<table class="module"><tr><th><a href="module-dict.html#Description">Description:</a></th><td>generic locking module for <code class="module"><a href="../mod/mod_dav.html">mod_dav</a></code></td></tr>
+<table class="module"><tr><th><a href="module-dict.html#Description">Description:</a></th><td>Generic locking module for <code class="module"><a href="../mod/mod_dav.html">mod_dav</a></code></td></tr>
 <tr><th><a href="module-dict.html#Status">Status:</a></th><td>Extension</td></tr>
 <tr><th><a href="module-dict.html#ModuleIdentifier">Module Identifier:</a></th><td>dav_lock_module</td></tr>
-<tr><th><a href="module-dict.html#SourceFile">Source File:</a></th><td>mod_dav_lock.c</td></tr>
-<tr><th><a href="module-dict.html#Compatibility">Compatibility:</a></th><td>Available in version 2.1 and later</td></tr></table>
+<tr><th><a href="module-dict.html#SourceFile">Source File:</a></th><td>mod_dav_lock.c</td></tr></table>
 <h3>Summary</h3>
 
     <p>This module implements a generic locking API which can be used by any
@@ -39,7 +38,7 @@
     the service of <code class="module"><a href="../mod/mod_dav.html">mod_dav</a></code>. But without a backend provider
     which makes use of it, it's useless and should not be loaded into the
     server. A sample backend module which actually utilizes
-    <code class="module"><a href="../mod/mod_dav_lock.html">mod_dav_lock</a></code> is <a href="http://subversion.tigris.org/">mod_dav_svn</a>, the subversion provider module.</p>
+    <code class="module"><a href="../mod/mod_dav_lock.html">mod_dav_lock</a></code> is <a href="http://subversion.apache.org/">mod_dav_svn</a>, the subversion provider module.</p>
 
     <p>Note that <code class="module"><a href="../mod/mod_dav_fs.html">mod_dav_fs</a></code> does <em>not</em> need this
     generic locking module, because it uses its own more specialized
@@ -117,8 +116,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/mod/mod_dav_lock.h
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

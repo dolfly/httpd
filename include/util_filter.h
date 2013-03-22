@@ -332,8 +332,8 @@ AP_DECLARE(apr_status_t) ap_pass_brigade(ap_filter_t *filter,
 AP_DECLARE(apr_status_t) ap_pass_brigade_fchk(request_rec *r,
                                               apr_bucket_brigade *bucket,
                                               const char *fmt,
-                                              ...);
-
+                                              ...)
+                                              __attribute__((format(printf,3,4)));
 
 /**
  * This function is used to register an input filter with the system.
@@ -486,6 +486,25 @@ AP_DECLARE(void) ap_remove_input_filter(ap_filter_t *f);
 
 AP_DECLARE(void) ap_remove_output_filter(ap_filter_t *f);
 
+/**
+ * Remove an input filter from either the request or connection stack
+ * it is associated with.
+ * @param next   The filter stack to search
+ * @param handle The filter handle (name) to remove
+ * @return APR_SUCCESS on removal or error
+ */
+AP_DECLARE(apr_status_t) ap_remove_input_filter_byhandle(ap_filter_t *next,
+                                                         const char *handle);
+/**
+ * Remove an output filter from either the request or connection stack
+ * it is associated with.
+ * @param next   The filter stack to search
+ * @param handle The filter handle (name) to remove
+ * @return APR_SUCCESS on removal or error
+ */
+AP_DECLARE(apr_status_t) ap_remove_output_filter_byhandle(ap_filter_t *next,
+                                                          const char *handle);
+
 /* The next two filters are for abstraction purposes only.  They could be
  * done away with, but that would require that we break modules if we ever
  * want to change our filter registration method.  The basic idea, is that
@@ -548,7 +567,7 @@ AP_DECLARE(apr_status_t) ap_fflush(ap_filter_t *f, apr_bucket_brigade *bb);
  * @param str The string to write
  */
 #define ap_fputs(f, bb, str) \
-        apr_brigade_puts(bb, ap_filter_flush, f, str)
+        apr_brigade_write(bb, ap_filter_flush, f, str, strlen(str))
 
 /**
  * Write a character for the current filter, buffering if possible.

@@ -32,6 +32,11 @@
 
 #include <assert.h>
 
+#if HAVE_VALGRIND
+#include <valgrind.h>
+int ssl_running_on_valgrind = 0;
+#endif
+
 /*
  *  the table of configuration directives we provide
  */
@@ -96,13 +101,13 @@ static const command_rec ssl_config_cmds[] = {
                 " certificates ('/path/to/file' - PEM encoded)")
     SSL_CMD_ALL(RSAAuthzFile, TAKE1,
                 "RFC 5878 Authz Extension file for RSA certificate "
-		"(`/path/to/file')")
+                "(`/path/to/file')")
     SSL_CMD_ALL(DSAAuthzFile, TAKE1,
                 "RFC 5878 Authz Extension file for DSA certificate "
-		"(`/path/to/file')")
+                "(`/path/to/file')")
     SSL_CMD_ALL(ECAuthzFile, TAKE1,
                 "RFC 5878 Authz Extension file for EC certificate "
-		"(`/path/to/file')")
+                "(`/path/to/file')")
 #ifdef HAVE_TLS_SESSION_TICKETS
     SSL_CMD_SRV(SessionTicketKeyFile, TAKE1,
                 "TLS session ticket encryption/decryption key file (RFC 5077) "
@@ -209,9 +214,12 @@ static const command_rec ssl_config_cmds[] = {
                "of the client certificate "
                "(`/path/to/file' - PEM encoded certificates)")
     SSL_CMD_SRV(ProxyCheckPeerExpire, FLAG,
-                "SSL Proxy: check the peers certificate expiration date")
+                "SSL Proxy: check the peer certificate's expiration date")
     SSL_CMD_SRV(ProxyCheckPeerCN, FLAG,
-                "SSL Proxy: check the peers certificate CN")
+                "SSL Proxy: check the peer certificate's CN")
+    SSL_CMD_SRV(ProxyCheckPeerName, FLAG,
+                "SSL Proxy: check the peer certificate's name "
+                "(must be present in subjectAltName extension or CN")
 
     /*
      * Per-directory context configuration directives
@@ -272,6 +280,11 @@ static const command_rec ssl_config_cmds[] = {
                 "SSL stapling option to Force the OCSP Stapling URL")
 #endif
 
+#ifdef HAVE_SSL_CONF_CMD
+    SSL_CMD_SRV(OpenSSLConfCmd, TAKE2,
+                "OpenSSL configuration command")
+#endif
+
     /* Deprecated directives. */
     AP_INIT_RAW_ARGS("SSLLog", ap_set_deprecated, NULL, OR_ALL,
       "SSLLog directive is no longer supported - use ErrorLog."),
@@ -285,13 +298,13 @@ static const command_rec ssl_config_cmds[] = {
 APR_IMPLEMENT_OPTIONAL_HOOK_RUN_ALL(
     modssl, AP, int, npn_advertise_protos_hook,
     (conn_rec *connection, apr_array_header_t *protos),
-    (connection, protos), OK, DECLINED);
+    (connection, protos), OK, DECLINED)
 
 /* Implement 'modssl_run_npn_proto_negotiated_hook'. */
 APR_IMPLEMENT_OPTIONAL_HOOK_RUN_ALL(
     modssl, AP, int, npn_proto_negotiated_hook,
     (conn_rec *connection, const char *proto_name, apr_size_t proto_name_len),
-    (connection, proto_name, proto_name_len), OK, DECLINED);
+    (connection, proto_name, proto_name_len), OK, DECLINED)
 
 /*
  *  the various processing hooks
@@ -311,7 +324,11 @@ static apr_status_t ssl_cleanup_pre_config(void *data)
 #if HAVE_ENGINE_LOAD_BUILTIN_ENGINES
     ENGINE_cleanup();
 #endif
+#if OPENSSL_VERSION_NUMBER >= 0x1000000fL
+    ERR_remove_thread_state(NULL);
+#else
     ERR_remove_state(0);
+#endif
 
     /* Don't call ERR_free_strings here; ERR_load_*_strings only
      * actually load the error strings once per process due to static
@@ -335,6 +352,11 @@ static int ssl_hook_pre_config(apr_pool_t *pconf,
                                apr_pool_t *plog,
                                apr_pool_t *ptemp)
 {
+
+#if HAVE_VALGRIND
+     ssl_running_on_valgrind = RUNNING_ON_VALGRIND;
+#endif
+
     /* We must register the library in full, to ensure our configuration
      * code can successfully test the SSL environment.
      */

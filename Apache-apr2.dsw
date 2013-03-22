@@ -99,6 +99,9 @@ Package=<4>
     Project_Dep_Name mod_alias
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name mod_allowhandlers
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name mod_allowmethods
     End Project Dependency
     Begin Project Dependency
@@ -160,6 +163,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name mod_cache_disk
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name mod_cache_socache
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name mod_cern_meta
@@ -249,6 +255,9 @@ Package=<4>
     Project_Dep_Name mod_logio
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name mod_macro
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name mod_mime
     End Project Dependency
     Begin Project Dependency
@@ -280,6 +289,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name mod_proxy_scgi
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name mod_proxy_wstunnel
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name mod_ratelimit
@@ -772,6 +784,24 @@ Package=<4>
 ###############################################################################
 
 Project: "mod_alias"=.\modules\mappers\mod_alias.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libapr
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libhttpd
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "mod_allowhandlers"=.\modules\aaa\mod_allowhandlers.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -1510,6 +1540,27 @@ Package=<4>
 
 ###############################################################################
 
+Project: "mod_cache_socache"=.\modules\cache\mod_cache_socache.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libapr
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libhttpd
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name mod_cache
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "mod_dumpio"=.\modules\debugging\mod_dumpio.dsp - Package Owner=<4>
 
 Package=<5>
@@ -2050,6 +2101,24 @@ Package=<4>
 
 ###############################################################################
 
+Project: "mod_macro"=.\modules\core\mod_macro.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libapr
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libhttpd
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "mod_mime"=.\modules\http\mod_mime.dsp - Package Owner=<4>
 
 Package=<5>
@@ -2307,6 +2376,26 @@ Package=<4>
     End Project Dependency
 }}}
 
+###############################################################################
+
+Project: "mod_proxy_wstunnel"=.\modules\proxy\mod_proxy_wstunnel.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libapr
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libhttpd
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name mod_proxy
+    End Project Dependency
+}}}
 
 ###############################################################################
 

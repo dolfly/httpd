@@ -1015,6 +1015,7 @@ static int do_errorlog_format(apr_array_header_t *fmt, ap_errorlog_info *info,
     int skipping = 0;
     ap_errorlog_format_item *items = (ap_errorlog_format_item *)fmt->elts;
 
+    AP_DEBUG_ASSERT(fmt->nelts > 0);
     for (i = 0; i < fmt->nelts; ++i) {
         ap_errorlog_format_item *item = &items[i];
         if (item->flags & AP_ERRORLOG_FLAG_FIELD_SEP) {
@@ -1087,7 +1088,8 @@ static void write_logline(char *errstr, apr_size_t len, apr_file_t *logf,
     }
 #ifdef HAVE_SYSLOG
     else {
-        syslog(level < LOG_PRIMASK ? level : APLOG_DEBUG, "%s", errstr);
+        syslog(level < LOG_PRIMASK ? level : APLOG_DEBUG, "%.*s",
+               (int)len, errstr);
     }
 #endif
 }
@@ -1112,7 +1114,8 @@ static void log_error_core(const char *file, int line, int module_index,
     int done = 0;
     int line_number = 0;
 
-    if (r && r->connection) {
+    if (r) {
+        AP_DEBUG_ASSERT(r->connection != NULL);
         c = r->connection;
     }
 
@@ -1262,8 +1265,7 @@ static void log_error_core(const char *file, int line, int module_index,
                                        &errstr_start, &errstr_end, fmt, args);
         }
 
-        if (!*errstr)
-        {
+        if (!*errstr) {
             /*
              * Don't log empty lines. This can happen with once-per-conn/req
              * info if an item with AP_ERRORLOG_FLAG_REQUIRED is NULL.
@@ -1394,7 +1396,7 @@ AP_DECLARE(void) ap_log_command_line(apr_pool_t *plog, server_rec *s)
 AP_DECLARE(void) ap_remove_pid(apr_pool_t *p, const char *rel_fname)
 {
     apr_status_t rv;
-    const char *fname = ap_server_root_relative(p, rel_fname);
+    const char *fname = ap_runtime_dir_relative(p, rel_fname);
 
     if (fname != NULL) {
         rv = apr_file_remove(fname, p);
@@ -1423,7 +1425,7 @@ AP_DECLARE(void) ap_log_pid(apr_pool_t *p, const char *filename)
         return;
     }
 
-    fname = ap_server_root_relative(p, filename);
+    fname = ap_runtime_dir_relative(p, filename);
     if (!fname) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_CRIT, APR_EBADPATH,
                      NULL, APLOGNO(00097) "Invalid PID file path %s, ignoring.", filename);
@@ -1476,7 +1478,7 @@ AP_DECLARE(apr_status_t) ap_read_pid(apr_pool_t *p, const char *filename,
         return APR_EGENERAL;
     }
 
-    fname = ap_server_root_relative(p, filename);
+    fname = ap_runtime_dir_relative(p, filename);
     if (!fname) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_CRIT, APR_EBADPATH,
                      NULL, APLOGNO(00101) "Invalid PID file path %s, ignoring.", filename);

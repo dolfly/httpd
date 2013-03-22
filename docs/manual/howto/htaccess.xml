@@ -47,11 +47,11 @@ changes on a per-directory basis.</p>
             <directive module="core">Options</directive>
             <directive module="mod_mime">AddHandler</directive>
             <directive module="core">SetHandler</directive>
-            <directive module="mod_authn_core">AuthType</directive>
-            <directive module="mod_authn_core">AuthName</directive>
+            <directive module="core">AuthType</directive>
+            <directive module="core">AuthName</directive>
             <directive module="mod_authn_file">AuthUserFile</directive>
             <directive module="mod_authz_groupfile">AuthGroupFile</directive>
-            <directive module="mod_authz_core">Require</directive>
+            <directive module="core">Require</directive>
         </directivelist>
 
     </related>
@@ -128,7 +128,7 @@ changes on a per-directory basis.</p>
     you don't have access to the main server configuration file. There is,
     for example, a common misconception that user authentication should
     always be done in <code>.htaccess</code> files, and, in more recent years,
-    another miscomception that <module>mod_rewrite</module> directives
+    another misconception that <module>mod_rewrite</module> directives
     must go in <code>.htaccess</code> files. This is simply not the
     case. You can put user authentication configurations in the main server
     configuration, and this is, in fact, the preferred way to do

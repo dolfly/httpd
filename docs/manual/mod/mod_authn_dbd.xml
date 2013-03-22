@@ -27,7 +27,6 @@
 <status>Extension</status>
 <sourcefile>mod_authn_dbd.c</sourcefile>
 <identifier>authn_dbd_module</identifier>
-<compatibility>Available in Apache 2.1 and later</compatibility>
 
 <summary>
     <p>This module provides authentication front-ends such as
@@ -60,7 +59,7 @@
 
 <section id="socache">
 <title>Performance and Cacheing</title>
-<p>Some users of DBD authentication in HTTPD 2.2 have reported that it
+<p>Some users of DBD authentication in HTTPD 2.2/2.4 have reported that it
 imposes a problematic load on the database.  This is most likely where
 an HTML page contains hundreds of objects (e.g. images, scripts, etc)
 each of which requires authentication.  Users affected (or concerned)
@@ -122,6 +121,17 @@ configuration required in some web applications.
 </p>
 </section>
 
+<section id="security">
+<title>Preventing SQL injections</title>
+  <p>Whether you need to care about SQL security depends on what DBD driver
+  and backend you use.  With most drivers you don't have to do anything :
+  the statement is prepared by the database at startup, and user input is
+  used only as data.  But you may need to untaint your input.  At the time
+  of writing, the only driver that requires you to take care is FreeTDS.</p>
+  <p>Please read <module>mod_dbd</module> documentation for more information
+  about security on this scope.</p>
+</section>
+
 <directivesynopsis>
 <name>AuthDBDUserPWQuery</name>
 <description>SQL query to look up a password for a user</description>
@@ -165,7 +175,8 @@ AuthDBDUserPWQuery "SELECT password FROM authn WHERE user = %s"
 
 <usage>
     <p>The <directive>AuthDBDUserRealmQuery</directive> specifies an
-    SQL query to look up a password for a specified user and realm.
+    SQL query to look up a password for a specified user and realm in a
+    digest authentication process.
     The user's ID and the realm, in that order, will be passed as string
     parameters when the SQL query is executed.  They may be referenced
     within the query statement using <code>%s</code> format specifiers.</p>

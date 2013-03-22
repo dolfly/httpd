@@ -18,10 +18,10 @@ endif
 XINCDIRS	+= \
 			$(APR)/include \
 			$(APRUTIL)/include \
-			$(AP_WORK)/include \
-			$(AP_WORK)/modules/http \
-			$(AP_WORK)/modules/generators \
-			$(AP_WORK)/modules/ssl \
+			$(SRC)/include \
+			$(STDMOD)/http \
+			$(STDMOD)/generators \
+			$(STDMOD)/ssl \
 			$(NWOS) \
 			$(EOLIST)
 
@@ -282,9 +282,12 @@ $(OBJDIR)/mod_proxy.imp:
 	@echo $(DL) ap_proxy_connect_to_backend,$(DL)>> $@
 	@echo $(DL) ap_proxy_connection_create,$(DL)>> $@
 	@echo $(DL) ap_proxy_cookie_reverse_map,$(DL)>> $@
+	@echo $(DL) ap_proxy_create_hdrbrgd,$(DL)>> $@
 	@echo $(DL) ap_proxy_define_balancer,$(DL)>> $@
 	@echo $(DL) ap_proxy_define_worker,$(DL)>> $@
 	@echo $(DL) ap_proxy_determine_connection,$(DL)>> $@
+	@echo $(DL) ap_proxy_find_balancershm,$(DL)>> $@
+	@echo $(DL) ap_proxy_find_workershm,$(DL)>> $@
 	@echo $(DL) ap_proxy_get_balancer,$(DL)>> $@
 	@echo $(DL) ap_proxy_get_worker,$(DL)>> $@
 	@echo $(DL) ap_proxy_hashfunc,$(DL)>> $@
@@ -297,6 +300,7 @@ $(OBJDIR)/mod_proxy.imp:
 	@echo $(DL) ap_proxy_is_word,$(DL)>> $@
 	@echo $(DL) ap_proxy_location_reverse_map,$(DL)>> $@
 	@echo $(DL) ap_proxy_parse_wstatus,$(DL)>> $@
+	@echo $(DL) ap_proxy_pass_brigade,$(DL)>> $@
 	@echo $(DL) ap_proxy_post_request,$(DL)>> $@
 	@echo $(DL) ap_proxy_pre_http_request,$(DL)>> $@
 	@echo $(DL) ap_proxy_pre_request,$(DL)>> $@

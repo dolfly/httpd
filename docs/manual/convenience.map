@@ -32,6 +32,7 @@ aliasmatch	mod/mod_alias.html#aliasmatch
 allow	mod/mod_access_compat.html#allow
 allowconnect	mod/mod_proxy_connect.html#allowconnect
 allowencodedslashes	mod/core.html#allowencodedslashes
+allowhandlers	mod/mod_allowhandlers.html#allowhandlers
 allowmethods	mod/mod_allowmethods.html#allowmethods
 allowoverride	mod/core.html#allowoverride
 allowoverridelist	mod/core.html#allowoverridelist
@@ -108,7 +109,9 @@ authzdbmtype	mod/mod_authz_dbm.html#authzdbmtype
 authzprovideralias	mod/mod_authz_core.html#authzprovideralias
 authzsendforbiddenonfailure	mod/mod_authz_core.html#authzsendforbiddenonfailure
 balancergrowth	mod/mod_proxy.html#balancergrowth
+balancerinherit	mod/mod_proxy.html#balancerinherit
 balancermember	mod/mod_proxy.html#balancermember
+balancerpersist	mod/mod_proxy.html#balancerpersist
 browsermatch	mod/mod_setenvif.html#browsermatch
 browsermatchnocase	mod/mod_setenvif.html#browsermatchnocase
 bufferedlogs	mod/mod_log_config.html#bufferedlogs
@@ -306,6 +309,7 @@ location	mod/core.html#location
 locationmatch	mod/core.html#locationmatch
 logformat	mod/mod_log_config.html#logformat
 loglevel	mod/core.html#loglevel
+logleveloverride	mod/core.html#logleveloverride
 logmessage	mod/mod_log_debug.html#logmessage
 luaauthzprovider	mod/mod_lua.html#luaauthzprovider
 luacodecache	mod/mod_lua.html#luacodecache
@@ -318,12 +322,15 @@ luahookmaptostorage	mod/mod_lua.html#luahookmaptostorage
 luahooktranslatename	mod/mod_lua.html#luahooktranslatename
 luahooktypechecker	mod/mod_lua.html#luahooktypechecker
 luainherit	mod/mod_lua.html#luainherit
+luainputfilter	mod/mod_lua.html#luainputfilter
 luamaphandler	mod/mod_lua.html#luamaphandler
+luaoutputfilter	mod/mod_lua.html#luaoutputfilter
 luapackagecpath	mod/mod_lua.html#luapackagecpath
 luapackagepath	mod/mod_lua.html#luapackagepath
 luaquickhandler	mod/mod_lua.html#luaquickhandler
 luaroot	mod/mod_lua.html#luaroot
 luascope	mod/mod_lua.html#luascope
+macro	mod/mod_macro.html#macro
 maxconnectionsperchild	mod/mpm_common.html#maxconnectionsperchild
 maxkeepaliverequests	mod/core.html#maxkeepaliverequests
 maxmemfree	mod/mpm_common.html#maxmemfree
@@ -429,6 +436,7 @@ redirectmatch	mod/mod_alias.html#redirectmatch
 redirectpermanent	mod/mod_alias.html#redirectpermanent
 redirecttemp	mod/mod_alias.html#redirecttemp
 reflectorheader	mod/mod_reflector.html#reflectorheader
+registerhttpmethod	mod/core.html#registerhttpmethod
 remoteipheader	mod/mod_remoteip.html#remoteipheader
 remoteipinternalproxy	mod/mod_remoteip.html#remoteipinternalproxy
 remoteipinternalproxylist	mod/mod_remoteip.html#remoteipinternalproxylist
@@ -547,6 +555,7 @@ sslproxycarevocationfile	mod/mod_ssl.html#sslproxycarevocationfile
 sslproxycarevocationpath	mod/mod_ssl.html#sslproxycarevocationpath
 sslproxycheckpeercn	mod/mod_ssl.html#sslproxycheckpeercn
 sslproxycheckpeerexpire	mod/mod_ssl.html#sslproxycheckpeerexpire
+sslproxycheckpeername	mod/mod_ssl.html#sslproxycheckpeername
 sslproxyciphersuite	mod/mod_ssl.html#sslproxyciphersuite
 sslproxyengine	mod/mod_ssl.html#sslproxyengine
 sslproxymachinecertificatechainfile	mod/mod_ssl.html#sslproxymachinecertificatechainfile
@@ -591,7 +600,9 @@ traceenable	mod/core.html#traceenable
 transferlog	mod/mod_log_config.html#transferlog
 typesconfig	mod/mod_mime.html#typesconfig
 undefine	mod/core.html#undefine
+undefmacro	mod/mod_macro.html#undefmacro
 unsetenv	mod/mod_env.html#unsetenv
+use	mod/mod_macro.html#use
 usecanonicalname	mod/core.html#usecanonicalname
 usecanonicalphysicalport	mod/core.html#usecanonicalphysicalport
 user	mod/mod_unixd.html#user
@@ -607,6 +618,7 @@ virtualdocumentrootip	mod/mod_vhost_alias.html#virtualdocumentrootip
 virtualhost	mod/core.html#virtualhost
 virtualscriptalias	mod/mod_vhost_alias.html#virtualscriptalias
 virtualscriptaliasip	mod/mod_vhost_alias.html#virtualscriptaliasip
+warning	mod/core.html#warning
 watchdoginterval	mod/mod_watchdog.html#watchdoginterval
 xbithack	mod/mod_include.html#xbithack
 xml2encalias	mod/mod_xml2enc.html#xml2encalias

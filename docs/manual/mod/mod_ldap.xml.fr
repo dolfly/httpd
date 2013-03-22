@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE modulesynopsis SYSTEM "../style/modulesynopsis.dtd">
 <?xml-stylesheet type="text/xsl" href="../style/manual.fr.xsl"?>
-<!-- English Revision : 1358946 -->
+<!-- English Revision : 1452865 -->
 <!-- French translation : Lucien GENTIS -->
 <!-- Reviewed by : Vincent Deffontaines -->
 
@@ -31,8 +31,6 @@ cache du r&eacute;sultat &agrave; destination des autres modules LDAP</descripti
 <status>Extension</status>
 <sourcefile>util_ldap.c</sourcefile>
 <identifier>ldap_module</identifier>
-<compatibility>Disponible &agrave; partir de la version 2.0.41
-d'Apache</compatibility>
 
 <summary>
     <p>Ce module a &eacute;t&eacute; con&ccedil;u dans le but d'am&eacute;liorer les performances
@@ -52,11 +50,9 @@ d'Apache</compatibility>
     href="http://www.openldap.org/">OpenLDAP SDK</a> (version 2.x ou
     sup&eacute;rieure), <a
     href="http://developer.novell.com/ndk/cldap.htm">Novell LDAP
-    SDK</a>, <a href="http://www.mozilla.org/directory/csdk.html">
-    Mozilla LDAP SDK</a>, le SDK LDAP propre &agrave; Solaris (bas&eacute; sur
-    Mozilla), le SDK LDAP propre &agrave; Microsoft, ou le SDK <a
-    href="http://www.iplanet.com/downloads/developer/">iPlanet
-    (Netscape)</a>. Voir le site web <a
+    SDK</a>, <a href="https://wiki.mozilla.org/LDAP_C_SDK">
+    Mozilla LDAP SDK</a>, le SDK LDAP Solaris natif (bas&eacute; sur Mozilla)
+    ou le SDK LDAP Microsoft natif. Voir le site web <a
     href="http://apr.apache.org">APR</a> pour plus de d&eacute;tails.</p>
 
 </summary>
@@ -457,14 +453,18 @@ LDAPTrustedGlobalCert CA_BASE64 /certs/cacert2.pem
 <name>LDAPSharedCacheFile</name>
 <description>D&eacute;finit le fichier du cache en m&eacute;moire
 partag&eacute;e</description>
-<syntax>LDAPSharedCacheFile <var>chemin/nom-fichier</var></syntax>
+<syntax>LDAPSharedCacheFile <var>chemin-fichier</var></syntax>
 <contextlist><context>server config</context></contextlist>
 
 <usage>
-    <p>Cette directive permet de sp&eacute;cifier le chemin et le nom du
+    <p>Cette directive permet de sp&eacute;cifier le chemin du
     fichier du cache en m&eacute;moire partag&eacute;e. Si elle n'est pas d&eacute;finie, la
     m&eacute;moire partag&eacute;e anonyme sera utilis&eacute;e si la plate-forme la
     supporte.</p>
+
+    <p>Si <var>chemin-fichier</var> n'est pas un chemin absolu, il sera
+    relatif au r&eacute;pertoire d&eacute;fini via la directive <directive
+    module="core">DefaultRuntimeDir</directive>.</p>
 </usage>
 </directivesynopsis>
 
@@ -824,6 +824,13 @@ Apache</compatibility>
     sauvegard&eacute;es dans le jeu de connexions d'arri&egrave;re-plan. Avec la
     valeur par d&eacute;faut -1, ou toute autre valeur n&eacute;gative, les connexions
     peuvent &ecirc;tre r&eacute;utilis&eacute;es sans limite de dur&eacute;e.</p>
+
+    <p>La dur&eacute;e de vie est bas&eacute;e sur le moment o&ugrave; la connexion LDAP est
+    remise en attente dans le jeu de connexions , et non sur la derni&egrave;re
+    entr&eacute;e/sortie effectu&eacute;e sur le serveur d'arri&egrave;re-plan. Si
+    l'information est mise en cache, la dur&eacute;e d'inactivit&eacute; apparente
+    peut exc&eacute;der la valeur de la directive
+    <directive>LDAPConnectionPoolTTL</directive>.</p>
 
     <note><p>Cette dur&eacute;e de vie s'exprime par d&eacute;faut en secondes, mais
     il est possible d'utiliser d'autres unit&eacute;s en ajoutant un suffixe :

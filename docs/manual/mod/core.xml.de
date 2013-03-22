@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE modulesynopsis SYSTEM "../style/modulesynopsis.dtd">
 <?xml-stylesheet type="text/xsl" href="../style/manual.de.xsl"?>
-<!-- English Revision: 344972:1364309 (outdated) -->
+<!-- English Revision: 344972:1438838 (outdated) -->
 
 <!--
  Licensed to the Apache Software Foundation (ASF) under one or more
@@ -363,7 +363,7 @@ werden d&uuml;rfen</description>
 erlaubt sind.</description>
 <syntax>AllowOverride All|None|<var>Direktiven-Typ</var>
 [<var>Direktiven-Typ</var>] ...</syntax>
-<default>AllowOverride All</default>
+<default>AllowOverride None (2.3.9 und später), AllowOverride All (2.3.8 und früher)</default>
 <contextlist><context>directory</context></contextlist>
 
 <usage>
@@ -1727,7 +1727,7 @@ bestimmte HTTP-Methoden</description>
     <note type="warning">
       Wenn es um Zugriffsbeschr&auml;nkungen geht, sollte
       ein <directive module="core" type="section"
-      >LimitExcept</directive>-Container sollte immmer einem <directive
+      >LimitExcept</directive>-Container sollte immer einem <directive
       module="core" type="section">Limit</directive>-Container vorgezogen
       werden, da <directive module="core" type="section">LimitExcept</directive>
       einen Schutz gegen beliebige Methoden bietet.

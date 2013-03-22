@@ -287,6 +287,19 @@ static const char *set_balancer_param(proxy_server_conf *conf,
             PROXY_STRNCPY(balancer->s->sticky_path, path);
         }
     }
+    else if (!strcasecmp(key, "stickysessionsep")) {
+        /* separator/delimiter for sessionid and route,
+         * normally '.'
+         */
+        if (strlen(val) != 1) {
+            if (!strcasecmp(val, "off"))
+                balancer->s->sticky_separator = 0;
+            else      
+                return "stickysessionsep must be a single character or Off";
+        }
+        else
+            balancer->s->sticky_separator = *val;
+    }
     else if (!strcasecmp(key, "nofailover")) {
         /* If set to 'on' the session will break
          * if the worker is in error state or
@@ -1129,7 +1142,6 @@ cleanup:
 
 static void * create_proxy_config(apr_pool_t *p, server_rec *s)
 {
-    unsigned int id;
     proxy_server_conf *ps = apr_pcalloc(p, sizeof(proxy_server_conf));
 
     ps->sec_proxy = apr_array_make(p, 10, sizeof(ap_conf_vector_t *));
@@ -1142,16 +1154,16 @@ static void * create_proxy_config(apr_pool_t *p, server_rec *s)
     ps->forward = NULL;
     ps->reverse = NULL;
     ps->domain = NULL;
-#if 0
-    id = ap_proxy_hashfunc(apr_psprintf(p, "%pp-%" APR_TIME_T_FMT, ps, apr_time_now()), PROXY_HASHFUNC_DEFAULT);
-#else
-    id = ap_proxy_hashfunc(apr_psprintf(p, "%pp", ps), PROXY_HASHFUNC_DEFAULT);
-#endif
-    ps->id = apr_psprintf(p, "s%x", id);
+    ps->id = apr_psprintf(p, "p%x", 1); /* simply for storage size */
     ps->viaopt = via_off; /* initially backward compatible with 1.3.1 */
     ps->viaopt_set = 0; /* 0 means default */
     ps->req = 0;
     ps->max_balancers = 0;
+    ps->bal_persist = 0;
+    ps->inherit = 1;
+    ps->inherit_set = 0;
+    ps->ppinherit = 1;
+    ps->ppinherit_set = 0;
     ps->bgrowth = 5;
     ps->bgrowth_set = 0;
     ps->req_set = 0;
@@ -1178,13 +1190,30 @@ static void * merge_proxy_config(apr_pool_t *p, void *basev, void *overridesv)
     proxy_server_conf *base = (proxy_server_conf *) basev;
     proxy_server_conf *overrides = (proxy_server_conf *) overridesv;
 
-    ps->proxies = apr_array_append(p, base->proxies, overrides->proxies);
+    ps->inherit = (overrides->inherit_set == 0) ? base->inherit : overrides->inherit;
+    ps->inherit_set = overrides->inherit_set || base->inherit_set;
+
+    ps->ppinherit = (overrides->ppinherit_set == 0) ? base->ppinherit : overrides->ppinherit;
+    ps->ppinherit_set = overrides->ppinherit_set || base->ppinherit_set;
+
+    if (ps->ppinherit) {
+        ps->proxies = apr_array_append(p, base->proxies, overrides->proxies);
+    }
+    else {
+        ps->proxies = overrides->proxies;
+    }
     ps->sec_proxy = apr_array_append(p, base->sec_proxy, overrides->sec_proxy);
     ps->aliases = apr_array_append(p, base->aliases, overrides->aliases);
     ps->noproxies = apr_array_append(p, base->noproxies, overrides->noproxies);
     ps->dirconn = apr_array_append(p, base->dirconn, overrides->dirconn);
-    ps->workers = apr_array_append(p, base->workers, overrides->workers);
-    ps->balancers = apr_array_append(p, base->balancers, overrides->balancers);
+    if (ps->inherit || ps->ppinherit) {
+        ps->workers = apr_array_append(p, base->workers, overrides->workers);
+        ps->balancers = apr_array_append(p, base->balancers, overrides->balancers);
+    }
+    else {
+        ps->workers = overrides->workers;
+        ps->balancers = overrides->balancers;
+    }
     ps->forward = overrides->forward ? overrides->forward : base->forward;
     ps->reverse = overrides->reverse ? overrides->reverse : base->reverse;
 
@@ -1197,6 +1226,7 @@ static void * merge_proxy_config(apr_pool_t *p, void *basev, void *overridesv)
     ps->bgrowth = (overrides->bgrowth_set == 0) ? base->bgrowth : overrides->bgrowth;
     ps->bgrowth_set = overrides->bgrowth_set || base->bgrowth_set;
     ps->max_balancers = overrides->max_balancers || base->max_balancers;
+    ps->bal_persist = overrides->bal_persist;
     ps->recv_buffer_size = (overrides->recv_buffer_size_set == 0) ? base->recv_buffer_size : overrides->recv_buffer_size;
     ps->recv_buffer_size_set = overrides->recv_buffer_size_set || base->recv_buffer_size_set;
     ps->io_buffer_size = (overrides->io_buffer_size_set == 0) ? base->io_buffer_size : overrides->io_buffer_size;
@@ -1653,19 +1683,19 @@ static const char *
         New->name = apr_pstrdup(parms->pool, arg);
         New->hostaddr = NULL;
 
-    if (ap_proxy_is_ipaddr(New, parms->pool)) {
+        if (ap_proxy_is_ipaddr(New, parms->pool)) {
 #if DEBUGGING
-        ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL,
-                     "Parsed addr %s", inet_ntoa(New->addr));
-        ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL,
-                     "Parsed mask %s", inet_ntoa(New->mask));
+            ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL,
+                         "Parsed addr %s", inet_ntoa(New->addr));
+            ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL,
+                         "Parsed mask %s", inet_ntoa(New->mask));
 #endif
-    }
-    else if (ap_proxy_is_domainname(New, parms->pool)) {
-        ap_str_tolower(New->name);
+        }
+        else if (ap_proxy_is_domainname(New, parms->pool)) {
+            ap_str_tolower(New->name);
 #if DEBUGGING
-        ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL,
-                     "Parsed domain %s", New->name);
+            ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL,
+                         "Parsed domain %s", New->name);
 #endif
         }
         else if (ap_proxy_is_hostname(New, parms->pool)) {
@@ -1869,6 +1899,35 @@ static const char *set_bgrowth(cmd_parms *parms, void *dummy, const char *arg)
     psf->bgrowth = growth;
     psf->bgrowth_set = 1;
 
+    return NULL;
+}
+
+static const char *set_persist(cmd_parms *parms, void *dummy, int flag)
+{
+    proxy_server_conf *psf =
+    ap_get_module_config(parms->server->module_config, &proxy_module);
+
+    psf->bal_persist = flag;
+    return NULL;
+}
+
+static const char *set_inherit(cmd_parms *parms, void *dummy, int flag)
+{
+    proxy_server_conf *psf =
+    ap_get_module_config(parms->server->module_config, &proxy_module);
+
+    psf->inherit = flag;
+    psf->inherit_set = 1;
+    return NULL;
+}
+
+static const char *set_ppinherit(cmd_parms *parms, void *dummy, int flag)
+{
+    proxy_server_conf *psf =
+    ap_get_module_config(parms->server->module_config, &proxy_module);
+
+    psf->ppinherit = flag;
+    psf->ppinherit_set = 1;
     return NULL;
 }
 
@@ -2259,6 +2318,14 @@ static const command_rec proxy_cmds[] =
      "A balancer name and scheme with list of params"),
     AP_INIT_TAKE1("BalancerGrowth", set_bgrowth, NULL, RSRC_CONF,
      "Number of additional Balancers that can be added post-config"),
+    AP_INIT_FLAG("BalancerPersist", set_persist, NULL, RSRC_CONF,
+     "on if the balancer should persist changes on reboot/restart made via the Balancer Manager"),
+    AP_INIT_FLAG("BalancerInherit", set_inherit, NULL, RSRC_CONF,
+     "on if this server should inherit Balancers and Workers defined in the main server "
+     "(Not recommended if using the Balancer Manager for dynamic changes)"),
+    AP_INIT_FLAG("ProxyPassInherit", set_ppinherit, NULL, RSRC_CONF,
+     "on if this server should inherit all ProxyPass directives defined in the main server "
+     "(Not recommended if using the Balancer Manager for dynamic changes)"),
     AP_INIT_TAKE1("ProxyStatus", set_status_opt, NULL, RSRC_CONF,
      "Configure Status: proxy status to one of: on | off | full"),
     AP_INIT_RAW_ARGS("ProxySet", set_proxy_param, NULL, RSRC_CONF|ACCESS_CONF,

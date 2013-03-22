@@ -604,6 +604,13 @@ static apr_status_t cache_out_filter(ap_filter_t *f, apr_bucket_brigade *in)
             apr_bucket_brigade *bb = apr_brigade_create(r->pool,
                     r->connection->bucket_alloc);
 
+            /* restore content type of cached response if available */
+            /* Needed especially when stale content gets served. */
+            const char *ct = apr_table_get(cache->handle->resp_hdrs, "Content-Type");
+            if (ct) {
+                ap_set_content_type(r, ct);
+            }
+
             /* restore status of cached response */
             r->status = cache->handle->cache_obj->info.status;
 
@@ -1686,9 +1693,6 @@ static void cache_insert_error_filter(request_rec *r)
 
             r->err_headers_out = cache->stale_handle->resp_hdrs;
 
-            ap_set_content_type(r, apr_table_get(
-                                cache->stale_handle->resp_hdrs, "Content-Type"));
-
             /* add a revalidation warning */
             warn_head = apr_table_get(r->err_headers_out, "Warning");
             if ((warn_head == NULL) || ((warn_head != NULL)
@@ -1800,7 +1804,6 @@ static void *merge_dir_config(apr_pool_t *p, void *basev, void *addv) {
 
 static void * create_cache_config(apr_pool_t *p, server_rec *s)
 {
-    const char *tmppath;
     cache_server_conf *ps = apr_pcalloc(p, sizeof(cache_server_conf));
 
     /* array of URL prefixes for which caching is enabled */
@@ -1823,10 +1826,7 @@ static void * create_cache_config(apr_pool_t *p, server_rec *s)
     ps->ignore_session_id_set = CACHE_IGNORE_SESSION_ID_UNSET;
     ps->lock = 0; /* thundering herd lock defaults to off */
     ps->lock_set = 0;
-    apr_temp_dir_get(&tmppath, p);
-    if (tmppath) {
-        ps->lockpath = apr_pstrcat(p, tmppath, DEFAULT_CACHE_LOCKPATH, NULL);
-    }
+    ps->lockpath = ap_runtime_dir_relative(p, DEFAULT_CACHE_LOCKPATH);
     ps->lockmaxage = apr_time_from_sec(DEFAULT_CACHE_MAXAGE);
     ps->x_cache = DEFAULT_X_CACHE;
     ps->x_cache_detail = DEFAULT_X_CACHE_DETAIL;
@@ -2201,7 +2201,7 @@ static const char *set_cache_lock_path(cmd_parms *parms, void *dummy,
         (cache_server_conf *)ap_get_module_config(parms->server->module_config,
                                                   &cache_module);
 
-    conf->lockpath = ap_server_root_relative(parms->pool, arg);
+    conf->lockpath = ap_runtime_dir_relative(parms->pool, arg);
     if (!conf->lockpath) {
         return apr_pstrcat(parms->pool, "Invalid CacheLockPath path ",
                            arg, NULL);
@@ -2379,8 +2379,8 @@ static const command_rec cache_cmds[] =
                  "Enable or disable the thundering herd lock."),
     AP_INIT_TAKE1("CacheLockPath", set_cache_lock_path, NULL, RSRC_CONF,
                   "The thundering herd lock path. Defaults to the '"
-                  DEFAULT_CACHE_LOCKPATH "' directory in the system "
-                  "temp directory."),
+                  DEFAULT_CACHE_LOCKPATH "' directory relative to the "
+                  "DefaultRuntimeDir setting."),
     AP_INIT_TAKE1("CacheLockMaxAge", set_cache_lock_maxage, NULL, RSRC_CONF,
                   "Maximum age of any thundering herd lock."),
     AP_INIT_FLAG("CacheHeader", set_cache_x_cache, NULL, RSRC_CONF | ACCESS_CONF,

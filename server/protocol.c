@@ -191,6 +191,10 @@ AP_DECLARE(apr_time_t) ap_rationalize_mtime(request_rec *r, apr_time_t mtime)
 /* Get a line of protocol input, including any continuation lines
  * caused by MIME folding (or broken clients) if fold != 0, and place it
  * in the buffer s, of size n bytes, without the ending newline.
+ * 
+ * Pulls from r->proto_input_filters instead of r->input_filters for
+ * stricter protocol adherence and better input filter behavior during
+ * chunked trailer processing (for http).
  *
  * If s is NULL, ap_rgetline_core will allocate necessary memory from r->pool.
  *
@@ -229,7 +233,7 @@ AP_DECLARE(apr_status_t) ap_rgetline_core(char **s, apr_size_t n,
 
     for (;;) {
         apr_brigade_cleanup(bb);
-        rv = ap_get_brigade(r->input_filters, bb, AP_MODE_GETLINE,
+        rv = ap_get_brigade(r->proto_input_filters, bb, AP_MODE_GETLINE,
                             APR_BLOCK_READ, 0);
         if (rv != APR_SUCCESS) {
             return rv;
@@ -346,7 +350,7 @@ AP_DECLARE(apr_status_t) ap_rgetline_core(char **s, apr_size_t n,
             apr_brigade_cleanup(bb);
 
             /* We only care about the first byte. */
-            rv = ap_get_brigade(r->input_filters, bb, AP_MODE_SPECULATIVE,
+            rv = ap_get_brigade(r->proto_input_filters, bb, AP_MODE_SPECULATIVE,
                                 APR_BLOCK_READ, 1);
             if (rv != APR_SUCCESS) {
                 return rv;
@@ -561,14 +565,14 @@ static int read_request_line(request_rec *r, apr_bucket_brigade *bb)
     const char *uri;
     const char *pro;
 
-#if 0
-    conn_rec *conn = r->connection;
-#endif
     int major = 1, minor = 0;   /* Assume HTTP/1.0 if non-"HTTP" protocol */
     char http[5];
     apr_size_t len;
     int num_blank_lines = 0;
     int max_blank_lines = r->server->limit_req_fields;
+    core_server_config *conf = ap_get_core_module_config(r->server->module_config);
+    int strict = conf->http_conformance & AP_HTTP_CONFORMANCE_STRICT;
+    int enforce_strict = !(conf->http_conformance & AP_HTTP_CONFORMANCE_LOGONLY);
 
     if (max_blank_lines <= 0) {
         max_blank_lines = DEFAULT_LIMIT_REQUEST_FIELDS;
@@ -627,19 +631,9 @@ static int read_request_line(request_rec *r, apr_bucket_brigade *bb)
                       ap_escape_logitem(r->pool, r->the_request));
     }
 
-    /* we've probably got something to do, ignore graceful restart requests */
-
     r->request_time = apr_time_now();
     ll = r->the_request;
     r->method = ap_getword_white(r->pool, &ll);
-
-#if 0
-/* XXX If we want to keep track of the Method, the protocol module should do
- * it.  That support isn't in the scoreboard yet.  Hopefully next week
- * sometime.   rbb */
-    ap_update_connection_status(AP_CHILD_THREAD_FROM_ID(conn->id), "Method",
-                                r->method);
-#endif
 
     uri = ap_getword_white(r->pool, &ll);
 
@@ -660,10 +654,19 @@ static int read_request_line(request_rec *r, apr_bucket_brigade *bb)
         r->assbackwards = 1;
         pro = "HTTP/0.9";
         len = 8;
+        if (conf->http09_enable == AP_HTTP09_DISABLE) {
+                r->status = HTTP_VERSION_NOT_SUPPORTED;
+                r->protocol = apr_pstrmemdup(r->pool, pro, len);
+                /* If we deny 0.9, send error message with 1.x */
+                r->assbackwards = 0;
+                r->proto_num = HTTP_VERSION(0, 9);
+                r->connection->keepalive = AP_CONN_CLOSE;
+                ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, APLOGNO(02401)
+                              "HTTP/0.9 denied by server configuration");
+                return 0;
+        }
     }
     r->protocol = apr_pstrmemdup(r->pool, pro, len);
-
-    /* XXX ap_update_connection_status(conn->id, "Protocol", r->protocol); */
 
     /* Avoid sscanf in the common case */
     if (len == 8
@@ -672,12 +675,59 @@ static int read_request_line(request_rec *r, apr_bucket_brigade *bb)
         && apr_isdigit(pro[7])) {
         r->proto_num = HTTP_VERSION(pro[5] - '0', pro[7] - '0');
     }
-    else if (3 == sscanf(r->protocol, "%4s/%u.%u", http, &major, &minor)
-             && (strcasecmp("http", http) == 0)
-             && (minor < HTTP_VERSION(1, 0)) ) /* don't allow HTTP/0.1000 */
-        r->proto_num = HTTP_VERSION(major, minor);
-    else
-        r->proto_num = HTTP_VERSION(1, 0);
+    else {
+        if (strict) {
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, APLOGNO(02418)
+                          "Invalid protocol '%s'", r->protocol);
+            if (enforce_strict) {
+                r->status = HTTP_BAD_REQUEST;
+                return 0;
+            }
+        }
+        if (3 == sscanf(r->protocol, "%4s/%u.%u", http, &major, &minor)
+            && (strcasecmp("http", http) == 0)
+            && (minor < HTTP_VERSION(1, 0)) ) { /* don't allow HTTP/0.1000 */
+            r->proto_num = HTTP_VERSION(major, minor);
+        }
+        else {
+            r->proto_num = HTTP_VERSION(1, 0);
+        }
+    }
+
+    if (strict) {
+        int err = 0;
+        if (ap_has_cntrl(r->the_request)) {
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, APLOGNO(02420)
+                          "Request line must not contain control characters");
+            err = HTTP_BAD_REQUEST;
+        }
+        if (r->parsed_uri.fragment) {
+            /* RFC3986 3.5: no fragment */
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, APLOGNO(02421)
+                          "URI must not contain a fragment");
+            err = HTTP_BAD_REQUEST;
+        }
+        else if (r->parsed_uri.user || r->parsed_uri.password) {
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, APLOGNO(02422)
+                          "URI must not contain a username/password");
+            err = HTTP_BAD_REQUEST;
+        }
+        else if (r->method_number == M_INVALID) {
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, APLOGNO(02423)
+                          "Invalid HTTP method string: %s", r->method);
+            err = HTTP_NOT_IMPLEMENTED;
+        }
+        else if (r->assbackwards == 0 && r->proto_num < HTTP_VERSION(1, 0)) {
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, APLOGNO(02424)
+                          "HTTP/0.x does not take a protocol");
+            err = HTTP_BAD_REQUEST;
+        }
+
+        if (err && enforce_strict) {
+            r->status = err;
+            return 0;
+        }
+    }
 
     return 1;
 }
@@ -721,6 +771,7 @@ AP_DECLARE(void) ap_get_mime_headers_core(request_rec *r, apr_bucket_brigade *bb
     apr_size_t len;
     int fields_read = 0;
     char *tmp_field;
+    core_server_config *conf = ap_get_core_module_config(r->server->module_config);
 
     /*
      * Read header lines until we get the empty separator line, a read error,
@@ -869,6 +920,33 @@ AP_DECLARE(void) ap_get_mime_headers_core(request_rec *r, apr_bucket_brigade *bb
                     *tmp_field-- = '\0';
                 }
 
+                if (conf->http_conformance & AP_HTTP_CONFORMANCE_STRICT) {
+                    int err = 0;
+
+                    if (*last_field == '\0') {
+                        err = HTTP_BAD_REQUEST;
+                        ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, APLOGNO(02425)
+                                      "Empty request header field name not allowed");
+                    }
+                    else if (ap_has_cntrl(last_field)) {
+                        err = HTTP_BAD_REQUEST;
+                        ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, APLOGNO(02426)
+                                      "[HTTP strict] Request header field name contains "
+                                      "control character: %.*s",
+                                      (int)LOG_NAME_MAX_LEN, last_field);
+                    }
+                    else if (ap_has_cntrl(value)) {
+                        err = HTTP_BAD_REQUEST;
+                        ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, APLOGNO(02427)
+                                      "Request header field '%.*s' contains"
+                                      "control character", (int)LOG_NAME_MAX_LEN,
+                                      last_field);
+                    }
+                    if (err && !(conf->http_conformance & AP_HTTP_CONFORMANCE_LOGONLY)) {
+                        r->status = err;
+                        return;
+                    }
+                }
                 apr_table_addn(r->headers_in, last_field, value);
 
                 /* reset the alloc_len so that we'll allocate a new
@@ -975,11 +1053,14 @@ request_rec *ap_read_request(conn_rec *conn)
 
     /* Get the request... */
     if (!read_request_line(r, tmp_bb)) {
-        if (r->status == HTTP_REQUEST_URI_TOO_LARGE
-            || r->status == HTTP_BAD_REQUEST) {
+        switch (r->status) {
+        case HTTP_REQUEST_URI_TOO_LARGE:
+        case HTTP_BAD_REQUEST:
+        case HTTP_VERSION_NOT_SUPPORTED:
+        case HTTP_NOT_IMPLEMENTED:
             if (r->status == HTTP_REQUEST_URI_TOO_LARGE) {
                 ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, APLOGNO(00565)
-                              "request failed: URI too long (longer than %d)",
+                              "request failed: client's request-line exceeds LimitRequestLine (longer than %d)",
                               r->server->limit_req_line);
             }
             else if (r->method == NULL) {
@@ -991,19 +1072,17 @@ request_rec *ap_read_request(conn_rec *conn)
             ap_run_log_transaction(r);
             apr_brigade_destroy(tmp_bb);
             goto traceout;
-        }
-        else if (r->status == HTTP_REQUEST_TIME_OUT) {
+        case HTTP_REQUEST_TIME_OUT:
             ap_update_child_status(conn->sbh, SERVER_BUSY_LOG, r);
-            if (!r->connection->keepalives) {
+            if (!r->connection->keepalives)
                 ap_run_log_transaction(r);
-            }
             apr_brigade_destroy(tmp_bb);
             goto traceout;
+        default:
+            apr_brigade_destroy(tmp_bb);
+            r = NULL;
+            goto traceout;
         }
-
-        apr_brigade_destroy(tmp_bb);
-        r = NULL;
-        goto traceout;
     }
 
     /* We may have been in keep_alive_timeout mode, so toggle back
@@ -1064,6 +1143,7 @@ request_rec *ap_read_request(conn_rec *conn)
      * now read. may update status.
      */
     ap_update_vhost_from_headers(r);
+    access_status = r->status;
 
     /* Toggle to the Host:-based vhost's timeout mode to fetch the
      * request body and send the response body, if needed.
@@ -1086,7 +1166,7 @@ request_rec *ap_read_request(conn_rec *conn)
          * HTTP/1.1 mentions twice (S9, S14.23) that a request MUST contain
          * a Host: header, and the server MUST respond with 400 if it doesn't.
          */
-        r->status = HTTP_BAD_REQUEST;
+        access_status = HTTP_BAD_REQUEST;
         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, APLOGNO(00569)
                       "client sent HTTP/1.1 request without hostname "
                       "(see RFC2616 section 14.23): %s", r->uri);
@@ -1102,14 +1182,8 @@ request_rec *ap_read_request(conn_rec *conn)
     ap_add_input_filter_handle(ap_http_input_filter_handle,
                                NULL, r, r->connection);
 
-    if (r->status != HTTP_OK) {
-        ap_send_error_response(r, 0);
-        ap_update_child_status(conn->sbh, SERVER_BUSY_LOG, r);
-        ap_run_log_transaction(r);
-        goto traceout;
-    }
-
-    if ((access_status = ap_run_post_read_request(r))) {
+    if (access_status != HTTP_OK
+        || (access_status = ap_run_post_read_request(r))) {
         ap_die(access_status, r);
         ap_update_child_status(conn->sbh, SERVER_BUSY_LOG, r);
         ap_run_log_transaction(r);

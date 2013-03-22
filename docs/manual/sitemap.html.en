@@ -15,7 +15,7 @@
 <link href="./images/favicon.ico" rel="shortcut icon" /></head>
 <body id="manual-page">
 <div id="page-header">
-<p class="menu"><a href="./mod/">Modules</a> | <a href="./mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="./glossary.html">Glossary</a> | <a href="./sitemap.html">Sitemap</a></p>
+<p class="menu"><a href="./mod/">Modules</a> | <a href="./mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="./glossary.html">Glossary</a> | <a href="./sitemap.html">Sitemap</a></p>
 <p class="apache">Apache HTTP Server Version 2.5</p>
 <img alt="" src="./images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="./images/left.gif" /></a></div>
@@ -175,6 +175,7 @@ Server on HPUX</a></li>
 </ul><ul><li><a href="mod/mod_access_compat.html">Apache Module mod_access_compat</a></li>
 <li><a href="mod/mod_actions.html">Apache Module mod_actions</a></li>
 <li><a href="mod/mod_alias.html">Apache Module mod_alias</a></li>
+<li><a href="mod/mod_allowhandlers.html">Apache Module mod_allowhandlers</a></li>
 <li><a href="mod/mod_allowmethods.html">Apache Module mod_allowmethods</a></li>
 <li><a href="mod/mod_asis.html">Apache Module mod_asis</a></li>
 <li><a href="mod/mod_auth_basic.html">Apache Module mod_auth_basic</a></li>
@@ -238,6 +239,7 @@ Server on HPUX</a></li>
 <li><a href="mod/mod_log_forensic.html">Apache Module mod_log_forensic</a></li>
 <li><a href="mod/mod_logio.html">Apache Module mod_logio</a></li>
 <li><a href="mod/mod_lua.html">Apache Module mod_lua</a></li>
+<li><a href="mod/mod_macro.html">Apache Module mod_macro</a></li>
 <li><a href="mod/mod_mime.html">Apache Module mod_mime</a></li>
 <li><a href="mod/mod_mime_magic.html">Apache Module mod_mime_magic</a></li>
 <li><a href="mod/mod_negotiation.html">Apache Module mod_negotiation</a></li>
@@ -335,8 +337,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/sitemap.html';
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
-<p class="menu"><a href="./mod/">Modules</a> | <a href="./mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="./glossary.html">Glossary</a> | <a href="./sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="./mod/">Modules</a> | <a href="./mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="./glossary.html">Glossary</a> | <a href="./sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

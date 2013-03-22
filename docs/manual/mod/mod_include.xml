@@ -27,8 +27,6 @@
 <status>Base</status>
 <sourcefile>mod_include.c</sourcefile>
 <identifier>include_module</identifier>
-<compatibility>Implemented as an output filter since Apache
-2.0</compatibility>
 
 <summary>
     <p>This module provides a filter which will process files
@@ -91,7 +89,7 @@ AddOutputFilter INCLUDES .shtml
     configure the server to accept requests with <code>PATH_INFO</code>.</p>
 </section> <!-- /pathinfo -->
 
-<section id="elements"><title>Basic Elements</title>
+<section id="elements"><title>Available Elements</title>
     <p>The document is parsed as an HTML document, with special
     commands embedded as SGML comments. A command has the syntax: </p>
 
@@ -142,28 +140,50 @@ AddOutputFilter INCLUDES .shtml
 
       <dl>
       <dt><code>echomsg</code> (<em>Apache 2.1 and later</em>)</dt>
-      <dd>The value is a message that is sent back to the
+      <dd><p>The value is a message that is sent back to the
       client if the <code><a href="#element.echo">echo</a></code> element
       attempts to echo an undefined variable. This overrides any <directive
-      module="mod_include">SSIUndefinedEcho</directive> directives.</dd>
+      module="mod_include">SSIUndefinedEcho</directive> directives.</p>
+
+      <example>
+        &lt;!--#config errmsg="[Value Undefined]" --&gt;
+      </example>
+      </dd>
 
       <dt><code>errmsg</code></dt>
-      <dd>The value is a message that is sent back to the
+      <dd><p>The value is a message that is sent back to the
       client if an error occurs while parsing the
       document. This overrides any <directive
-      module="mod_include">SSIErrorMsg</directive> directives.</dd>
+      module="mod_include">SSIErrorMsg</directive> directives.</p>
+     
+      <example>
+       &lt;!--#config errmsg="[Oops, something broke.]" --&gt;
+      </example>
+      </dd>
 
       <dt><code>sizefmt</code></dt>
-      <dd>The value sets the format to be used when displaying
+      <dd><p>The value sets the format to be used when displaying
       the size of a file. Valid values are <code>bytes</code>
       for a count in bytes, or <code>abbrev</code> for a count
       in Kb or Mb as appropriate, for example a size of 1024 bytes
-      will be printed as "1K".</dd>
+      will be printed as "1K".</p>
+      
+      <example>
+      &lt;!--#config sizefmt="abbrev" --&gt;
+      </example>
+      
+      </dd>
 
       <dt><code>timefmt</code></dt>
-      <dd>The value is a string to be used by the
+      <dd><p>The value is a string to be used by the
       <code>strftime(3)</code> library routine when printing
-      dates.</dd>
+      dates.</p>
+      
+      <example>
+      &lt;!--#config timefmt=""%R, %B %d, %Y"" --&gt;
+      </example>
+      
+      </dd>
       </dl>
     </section> <!-- /config -->
 
@@ -225,6 +245,10 @@ AddOutputFilter INCLUDES .shtml
         In order to avoid cross-site scripting issues, you should
         <em>always</em> encode user supplied data.
       </note>
+
+      <example><title>Example</title>
+        &lt;!--#echo encoding="entity" var="QUERY_STRING" --&gt;
+      </example>
       </dd>
       </dl>
     </section> <!-- /echo -->
@@ -308,7 +332,18 @@ AddOutputFilter INCLUDES .shtml
       <dl>
       <dt><code>file</code></dt>
       <dd>The value is a path relative to the directory
-      containing the current document being parsed.</dd>
+      containing the current document being parsed.
+
+    <example>
+        This file is &lt;!--#fsize file="mod_include.html" --&gt; bytes.
+    </example>
+
+    The value of <code>file</code> cannot start with a slash
+    (<code>/</code>), nor can it contain <code>../</code> so as to 
+    refer to a file above the current directory or outside of the
+    document root. Attempting to so will result in the error message:
+    <code>The given path was above the root path</code>.
+      </dd>
 
       <dt><code>virtual</code></dt>
       <dd>The value is a (%-encoded) URL-path. If it does not begin with
@@ -316,6 +351,14 @@ AddOutputFilter INCLUDES .shtml
       Note, that this does <em>not</em> print the size of any CGI output,
       but the size of the CGI script itself.</dd>
       </dl>
+
+    <example>
+        This file is &lt;!--#fsize virtual="/docs/mod/mod_include.html" --&gt; bytes.
+    </example>
+
+      <p>Note that in many cases these two are exactly the same thing.
+      However, the <code>file</code> attribute doesn't respect URL-space
+      aliases.</p>
     </section> <!-- /fsize -->
 
     <section id="element.flastmod"><title>The flastmod Element</title>
@@ -406,13 +449,15 @@ AddOutputFilter INCLUDES .shtml
     </section> <!-- /include -->
 
     <section id="element.printenv"><title>The printenv Element</title>
-      <p>This prints out a listing of all existing variables and
+      <p>This prints out a plain text listing of all existing variables and
       their values. Special characters are entity encoded (see the <code><a
       href="#element.echo">echo</a></code> element for details)
       before being output. There are no attributes.</p>
 
       <example><title>Example</title>
-        &lt;!--#printenv --&gt;
+        &lt;pre&gt;
+          &lt;!--#printenv --&gt;
+        &lt;/pre&gt;
       </example>
     </section> <!-- /printenv -->
 
@@ -514,7 +559,7 @@ AddOutputFilter INCLUDES .shtml
     <code>include</code>, <code>echo</code>, and <code>set</code>
     directives. If <directive module="mod_include"
     >SSILegacyExprParser</directive> is set to <code>on</code>,
-    substitution also occures in the arguments to conditional operators.
+    substitution also occurs in the arguments to conditional operators.
     You can insert a literal dollar sign into the string using backslash
     quoting:</p>
 
@@ -563,7 +608,7 @@ AddOutputFilter INCLUDES .shtml
     <p>The <code>endif</code> element ends the <code>if</code> element
     and is required.</p>
 
-    <p><var>test_condition</var> is a boolean expression tha follows the
+    <p><var>test_condition</var> is a boolean expression which follows the
     <a href="../expr.html">ap_expr</a> syntax. The syntax can be changed
     to be compatible with Apache HTTPD 2.2.x using <directive
     module="mod_include">SSILegacyExprParser</directive>.</p>
@@ -758,7 +803,6 @@ AddOutputFilter INCLUDES .shtml
 <default>SSIEndTag &quot;--&gt;&quot;</default>
 <contextlist><context>server config</context><context>virtual host</context>
 </contextlist>
-<compatibility>Available in version 2.0.30 and later.</compatibility>
 
 <usage>
     <p>This directive changes the string that <module>mod_include</module>
@@ -780,7 +824,6 @@ AddOutputFilter INCLUDES .shtml
 <contextlist><context>server config</context><context>virtual host</context>
 <context>directory</context><context>.htaccess</context></contextlist>
 <override>All</override>
-<compatibility>Available in version 2.0.34 and later.</compatibility>
 
 <usage>
     <p>This directive changes the string that <module>mod_include</module>
@@ -802,7 +845,6 @@ directive]&quot;</default>
 <contextlist><context>server config</context><context>virtual host</context>
 <context>directory</context><context>.htaccess</context></contextlist>
 <override>All</override>
-<compatibility>Available in version 2.0.30 and later.</compatibility>
 
 <usage>
     <p>The <directive>SSIErrorMsg</directive> directive changes the error
@@ -827,7 +869,6 @@ directive]&quot;</default>
 <default>SSIStartTag &quot;&lt;!--#&quot;</default>
 <contextlist><context>server config</context><context>virtual host</context>
 </contextlist>
-<compatibility>Available in version 2.0.30 and later.</compatibility>
 
 <usage>
     <p>This directive changes the string that <module>mod_include</module>
@@ -864,7 +905,6 @@ displayed</description>
 <context>server config</context><context>virtual host</context>
 <context>directory</context><context>.htaccess</context></contextlist>
 <override>All</override>
-<compatibility>Available in version 2.0.30 and later.</compatibility>
 
 <usage>
 <p>This directive changes the format in which date strings are displayed
@@ -890,7 +930,6 @@ displayed</description>
 <syntax>SSIETag on|off</syntax>
 <default>SSIETag off</default>
 <contextlist><context>directory</context><context>.htaccess</context></contextlist>
-<compatibility>Available in version 2.2.15 and later.</compatibility>
 
 <usage>
       <p>Under normal circumstances, a file filtered by <module>mod_include</module>
@@ -931,7 +970,6 @@ server.</description>
 <syntax>SSILastModified on|off</syntax>
 <default>SSILastModified off</default>
 <contextlist><context>directory</context><context>.htaccess</context></contextlist>
-<compatibility>Available in version 2.2.15 and later.</compatibility>
 
 <usage>
       <p>Under normal circumstances, a file filtered by <module>mod_include</module>

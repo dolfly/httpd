@@ -869,7 +869,9 @@ static apr_status_t ssl_io_filter_error(ap_filter_t *f,
             break;
 
     case MODSSL_ERROR_BAD_GATEWAY:
-        bucket = ap_bucket_error_create(HTTP_BAD_REQUEST, NULL,
+        /* Send an error bucket, though the proxy currently has no
+         * special handling for error buckets and ignores this. */
+        bucket = ap_bucket_error_create(HTTP_BAD_GATEWAY, NULL,
                                         f->c->pool,
                                         f->c->bucket_alloc);
         ap_log_cerror(APLOG_MARK, APLOG_INFO, 0, f->c, APLOGNO(01997)
@@ -1055,6 +1057,7 @@ static apr_status_t ssl_io_filter_handshake(ssl_filter_ctx_t *filter_ctx)
 #endif
         const char *hostname_note = apr_table_get(c->notes,
                                                   "proxy-request-hostname");
+        BOOL proxy_ssl_check_peer_ok = TRUE;
         sc = mySrvConfig(server);
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -1092,42 +1095,67 @@ static apr_status_t ssl_io_filter_handshake(ssl_filter_ctx_t *filter_ctx)
             return MODSSL_ERROR_BAD_GATEWAY;
         }
 
+        cert = SSL_get_peer_certificate(filter_ctx->pssl);
+
         if (sc->proxy_ssl_check_peer_expire != SSL_ENABLED_FALSE) {
-            cert = SSL_get_peer_certificate(filter_ctx->pssl);
             if (!cert
                 || (X509_cmp_current_time(
                      X509_get_notBefore(cert)) >= 0)
                 || (X509_cmp_current_time(
                      X509_get_notAfter(cert)) <= 0)) {
+                proxy_ssl_check_peer_ok = FALSE;
                 ap_log_cerror(APLOG_MARK, APLOG_INFO, 0, c, APLOGNO(02004)
                               "SSL Proxy: Peer certificate is expired");
-                if (cert) {
-                    X509_free(cert);
-                }
-                /* ensure that the SSL structures etc are freed, etc: */
-                ssl_filter_io_shutdown(filter_ctx, c, 1);
-                apr_table_setn(c->notes, "SSL_connect_rv", "err");
-                return HTTP_BAD_GATEWAY;
             }
-            X509_free(cert);
         }
-        if ((sc->proxy_ssl_check_peer_cn != SSL_ENABLED_FALSE) &&
+        if ((sc->proxy_ssl_check_peer_name != SSL_ENABLED_FALSE) &&
+            hostname_note) {
+            apr_table_unset(c->notes, "proxy-request-hostname");
+            if (!cert
+                || SSL_X509_match_name(c->pool, cert, hostname_note,
+                                       TRUE, server) == FALSE) {
+                proxy_ssl_check_peer_ok = FALSE;
+                ap_log_cerror(APLOG_MARK, APLOG_INFO, 0, c, APLOGNO(02411)
+                              "SSL Proxy: Peer certificate does not match "
+                              "for hostname %s", hostname_note);
+            }
+        }
+        else if ((sc->proxy_ssl_check_peer_cn != SSL_ENABLED_FALSE) &&
             hostname_note) {
             const char *hostname;
+            int match = 0;
 
             hostname = ssl_var_lookup(NULL, server, c, NULL,
                                       "SSL_CLIENT_S_DN_CN");
             apr_table_unset(c->notes, "proxy-request-hostname");
-            if (strcasecmp(hostname, hostname_note)) {
+
+            /* Do string match or simplest wildcard match if that
+             * fails. */
+            match = strcasecmp(hostname, hostname_note) == 0;
+            if (!match && strncmp(hostname, "*.", 2) == 0) {
+                const char *p = ap_strchr_c(hostname_note, '.');
+                
+                match = p && strcasecmp(p, hostname + 1) == 0;
+            }
+
+            if (!match) {
+                proxy_ssl_check_peer_ok = FALSE;
                 ap_log_cerror(APLOG_MARK, APLOG_INFO, 0, c, APLOGNO(02005)
                               "SSL Proxy: Peer certificate CN mismatch:"
                               " Certificate CN: %s Requested hostname: %s",
                               hostname, hostname_note);
-                /* ensure that the SSL structures etc are freed, etc: */
-                ssl_filter_io_shutdown(filter_ctx, c, 1);
-                apr_table_setn(c->notes, "SSL_connect_rv", "err");
-                return HTTP_BAD_GATEWAY;
             }
+        }
+
+        if (cert) {
+            X509_free(cert);
+        }
+
+        if (proxy_ssl_check_peer_ok != TRUE) {
+            /* ensure that the SSL structures etc are freed, etc: */
+            ssl_filter_io_shutdown(filter_ctx, c, 1);
+            apr_table_setn(c->notes, "SSL_connect_rv", "err");
+            return HTTP_BAD_GATEWAY;
         }
 
         apr_table_setn(c->notes, "SSL_connect_rv", "ok");
@@ -1937,9 +1965,8 @@ void ssl_io_filter_register(apr_pool_t *p)
 
 #define DUMP_WIDTH 16
 
-static void ssl_io_data_dump(server_rec *srvr,
-                             const char *s,
-                             long len)
+static void ssl_io_data_dump(conn_rec *c, server_rec *s,
+                             const char *b, long len)
 {
     char buf[256];
     char tmp[64];
@@ -1947,12 +1974,12 @@ static void ssl_io_data_dump(server_rec *srvr,
     unsigned char ch;
 
     trunc = 0;
-    for(; (len > 0) && ((s[len-1] == ' ') || (s[len-1] == '\0')); len--)
+    for(; (len > 0) && ((b[len-1] == ' ') || (b[len-1] == '\0')); len--)
         trunc++;
     rows = (len / DUMP_WIDTH);
     if ((rows * DUMP_WIDTH) < len)
         rows++;
-    ap_log_error(APLOG_MARK, APLOG_TRACE7, 0, srvr,
+    ap_log_cserror(APLOG_MARK, APLOG_TRACE7, 0, c, s,
             "+-------------------------------------------------------------------------+");
     for(i = 0 ; i< rows; i++) {
 #if APR_CHARSET_EBCDIC
@@ -1962,7 +1989,7 @@ static void ssl_io_data_dump(server_rec *srvr,
             j = len % DUMP_WIDTH;
         if (j == 0)
             j = DUMP_WIDTH;
-        memcpy(ebcdic_text,(char *)(s) + i * DUMP_WIDTH, j);
+        memcpy(ebcdic_text,(char *)(b) + i * DUMP_WIDTH, j);
         ap_xlate_proto_from_ascii(ebcdic_text, j);
 #endif /* APR_CHARSET_EBCDIC */
         apr_snprintf(tmp, sizeof(tmp), "| %04x: ", i * DUMP_WIDTH);
@@ -1971,7 +1998,7 @@ static void ssl_io_data_dump(server_rec *srvr,
             if (((i * DUMP_WIDTH) + j) >= len)
                 apr_cpystrn(buf+strlen(buf), "   ", sizeof(buf)-strlen(buf));
             else {
-                ch = ((unsigned char)*((char *)(s) + i * DUMP_WIDTH + j)) & 0xff;
+                ch = ((unsigned char)*((char *)(b) + i * DUMP_WIDTH + j)) & 0xff;
                 apr_snprintf(tmp, sizeof(tmp), "%02x%c", ch , j==7 ? '-' : ' ');
                 apr_cpystrn(buf+strlen(buf), tmp, sizeof(buf)-strlen(buf));
             }
@@ -1981,7 +2008,7 @@ static void ssl_io_data_dump(server_rec *srvr,
             if (((i * DUMP_WIDTH) + j) >= len)
                 apr_cpystrn(buf+strlen(buf), " ", sizeof(buf)-strlen(buf));
             else {
-                ch = ((unsigned char)*((char *)(s) + i * DUMP_WIDTH + j)) & 0xff;
+                ch = ((unsigned char)*((char *)(b) + i * DUMP_WIDTH + j)) & 0xff;
 #if APR_CHARSET_EBCDIC
                 apr_snprintf(tmp, sizeof(tmp), "%c", (ch >= 0x20 && ch <= 0x7F) ? ebcdic_text[j] : '.');
 #else /* APR_CHARSET_EBCDIC */
@@ -1991,13 +2018,12 @@ static void ssl_io_data_dump(server_rec *srvr,
             }
         }
         apr_cpystrn(buf+strlen(buf), " |", sizeof(buf)-strlen(buf));
-        ap_log_error(APLOG_MARK, APLOG_TRACE7, 0, srvr,
-                     "%s", buf);
+        ap_log_cserror(APLOG_MARK, APLOG_TRACE7, 0, c, s, "%s", buf);
     }
     if (trunc > 0)
-        ap_log_error(APLOG_MARK, APLOG_TRACE7, 0, srvr,
+        ap_log_cserror(APLOG_MARK, APLOG_TRACE7, 0, c, s,
                 "| %04ld - <SPACES/NULS>", len + trunc);
-    ap_log_error(APLOG_MARK, APLOG_TRACE7, 0, srvr,
+    ap_log_cserror(APLOG_MARK, APLOG_TRACE7, 0, c, s,
             "+-------------------------------------------------------------------------+");
     return;
 }
@@ -2019,15 +2045,21 @@ long ssl_io_data_cb(BIO *bio, int cmd,
     if (   cmd == (BIO_CB_WRITE|BIO_CB_RETURN)
         || cmd == (BIO_CB_READ |BIO_CB_RETURN) ) {
         if (rc >= 0) {
+            const char *dump = "";
+            if (APLOG_CS_IS_LEVEL(c, s, APLOG_TRACE7)) {
+                if (argp != NULL)
+                    dump = "(BIO dump follows)";
+                else
+                    dump = "(Oops, no memory buffer?)";
+            }
             ap_log_cserror(APLOG_MARK, APLOG_TRACE4, 0, c, s,
                     "%s: %s %ld/%d bytes %s BIO#%pp [mem: %pp] %s",
                     SSL_LIBRARY_NAME,
                     (cmd == (BIO_CB_WRITE|BIO_CB_RETURN) ? "write" : "read"),
                     rc, argi, (cmd == (BIO_CB_WRITE|BIO_CB_RETURN) ? "to" : "from"),
-                    bio, argp,
-                    (argp != NULL ? "(BIO dump follows)" : "(Oops, no memory buffer?)"));
-            if ((argp != NULL) && APLOG_CS_IS_LEVEL(c, s, APLOG_TRACE7))
-                ssl_io_data_dump(s, argp, rc);
+                    bio, argp, dump);
+            if (*dump != '\0' && argp != NULL)
+                ssl_io_data_dump(c, s, argp, rc);
         }
         else {
             ap_log_cserror(APLOG_MARK, APLOG_TRACE4, 0, c, s,

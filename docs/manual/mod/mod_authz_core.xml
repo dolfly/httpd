@@ -347,7 +347,7 @@ Require group admin
 
     <p>When multiple <directive>Require</directive> directives are
     used in a single
-    <a href="../sections.html#mergin">configuration section</a>
+    <a href="../sections.html#merging">configuration section</a>
     and are not contained in another authorization directive like
     <directive module="mod_authz_core" type="section">RequireAll</directive>,
     they are implicitly contained within a
@@ -355,10 +355,22 @@ Require group admin
     directive.  Thus the first one to authorize a user authorizes the
     entire request, and subsequent <directive>Require</directive> directives
     are ignored.</p>
+
+    <note type="warning"><title>Security Warning</title>
+    <p>Exercise caution when setting authorization directives in
+    <directive module="core">Location</directive> sections
+    that overlap with content served out of the filesystem.  
+    By default, these <a href="../sections.html#merging"
+    >configuration sections</a> overwrite authorization configuration
+    in <directive module="core">Directory</directive>,  
+    and <directive module="core">Files</directive> sections.</p>
+    <p>The <directive module="mod_authz_core">AuthMerging</directive> directive 
+    can be used to control how authorization configuration sections are 
+    merged.</p>
+    </note>
 </usage>
 
-<seealso><a href="../howto/auth.html">Authentication, Authorization,
-    and Access Control</a></seealso>
+<seealso><a href="../howto/access.html">Access Control howto</a></seealso>
 <seealso><a href="#logic">Authorization Containers</a></seealso>
 <seealso><module>mod_authn_core</module></seealso>
 <seealso><module>mod_authz_host</module></seealso>
@@ -488,7 +500,7 @@ sections.</description>
 
 <usage>
     <p>When authorization is enabled, it is normally inherited by each
-    subsequent <a href="../sections.html#mergin">configuration section</a>,
+    subsequent <a href="../sections.html#merging">configuration section</a>,
     unless a different set of authorization directives are specified.
     This is the default action, which corresponds to an explicit setting
     of <code>AuthMerging Off</code>.</p>

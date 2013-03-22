@@ -14,7 +14,7 @@
 
 <link href="../images/favicon.ico" rel="shortcut icon" /></head>
 <body id="manual-page"><div id="page-header">
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
 <p class="apache">Apache HTTP Server Version 2.5</p>
 <img alt="" src="../images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div>
@@ -55,7 +55,7 @@ http://www.example.com/index.html.sum</code>.
 <p>
 In the second part of this document, which deals with configuration 
 directive and context awareness, we will be looking at a module that simply 
-write out its own configuration to the client.
+writes out its own configuration to the client.
 </p>
 
 
@@ -314,11 +314,11 @@ looks like
 <h3><a name="request_rec" id="request_rec">The request_rec structure</a></h3> 
 <p>The most essential part of any request is the <em>request record
 </em>. In a call to a handler function, this is represented by the <code>
-request_req* </code> structure passed along with every call that is made. 
+request_rec* </code> structure passed along with every call that is made. 
 This struct, typically just refered to as <code>r</code> in modules, 
 contains all the information you need for your module to fully process any 
 HTTP request and respond accordingly.</p> <p>Some key elements of the <code>
-request_req </code> structure are:
+request_rec </code> structure are:
 </p>
 <ul>
 <li><code>r-&gt;handler (char*):</code> Contains the name of the handler the server is currently asking to do the handling of this request</li>
@@ -333,7 +333,7 @@ request_req </code> structure are:
 "<a href="#memory">Memory management</a>" chapter.</li>
 </ul>
 <p>
-A complete list of all the values contained with in the <code>request_req</code> structure can be found in 
+A complete list of all the values contained within the <code>request_rec</code> structure can be found in 
 the <a href="http://svn.apache.org/repos/asf/httpd/httpd/trunk/include/httpd.h"><code>httpd.h</code></a> header 
 file or at <a href="http://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html">http://ci.apache.org/projects/httpd/trunk/doxygen/structrequest__rec.html</a>.
 </p>
@@ -428,7 +428,7 @@ the next, without informing other handlers.
 
 <ul>
 <li>
-    <code>ap_rputs(const char *string, request_req *r)</code>: <br />
+    <code>ap_rputs(const char *string, request_rec *r)</code>: <br />
     Sends a string of text to the client. This is a shorthand version of <a href="http://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__PROTO.html#gac827cd0537d2b6213a7c06d7c26cc36e">
     ap_rwrite</a>.
     
@@ -454,7 +454,7 @@ the next, without informing other handlers.
 </li>
 <li>
     <code>
-    <a href="http://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__PROTO.html#gaa2f8412c400197338ec509f4a45e4579">ap_set_content_type</a>(request_req *r, const char *type)</code>: <br />
+    <a href="http://ci.apache.org/projects/httpd/trunk/doxygen/group__APACHE__CORE__PROTO.html#gaa2f8412c400197338ec509f4a45e4579">ap_set_content_type</a>(request_rec *r, const char *type)</code>: <br />
     Sets the content type of the output you are sending.
     
 
@@ -1279,7 +1279,7 @@ void* example_create_dir_conf(apr_pool_t* pool, char* context) {
 <h3><a name="context_merge" id="context_merge">Merging configurations</a></h3>
 <p>
 Our next step in creating a context aware configuration is merging 
-configurations. This part of the process particularly apply to scenarios 
+configurations. This part of the process particularly applies to scenarios 
 where you have a parent configuration and a child, such as the following: 
 </p>
 <pre class="prettyprint lang-config">
@@ -1295,8 +1295,8 @@ where you have a parent configuration and a child, such as the following:
 
 <p>
 In this example, it is natural to assume that the directory <code>
-/var/www/subdir</code> should inherit the value set for the <code>/var/www
-</code> directory, as we did not specify a <code>ExampleEnable</code> nor 
+/var/www/subdir</code> should inherit the values set for the <code>/var/www
+</code> directory, as we did not specify an <code>ExampleEnable</code> nor 
 an <code>ExamplePath</code> for this directory. The server does not presume to 
 know if this is true, but cleverly does the following:
 </p>
@@ -1625,7 +1625,7 @@ typedef struct {
     const char* value;
 } keyValuePair;
 
-keyValuePair* readPost(request_req* r) {
+keyValuePair* readPost(request_rec* r) {
     apr_array_header_t *pairs = NULL;
     apr_off_t len;
     apr_size_t size;
@@ -1651,7 +1651,7 @@ keyValuePair* readPost(request_req* r) {
     return kvp;    
 }
 
-static int example_handler(request_req *r) 
+static int example_handler(request_rec *r) 
 {
     /*~~~~~~~~~~~~~~~~~~~~~~*/
     
@@ -1679,7 +1679,7 @@ static int example_handler(request_req *r)
 
 
 <pre class="prettyprint lang-c">
-static int example_handler(request_req *r) 
+static int example_handler(request_rec *r) 
 {
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     const apr_array_header_t    *fields;
@@ -1741,7 +1741,7 @@ static int util_read(request_rec *r, const char **rbuf, apr_off_t *size)
     return(rc);
 }
 
-static int example_handler(request_req* r) 
+static int example_handler(request_rec* r) 
 {
     /*~~~~~~~~~~~~~~~~*/
     apr_off_t   size;
@@ -1749,7 +1749,7 @@ static int example_handler(request_req* r)
     /*~~~~~~~~~~~~~~~~*/
 
     if(util_read(r, &amp;data, &amp;size) == OK) {
-        ap_rprintf("We read a request body that was %u bytes long", size);
+        ap_rprintf(r, "We read a request body that was %u bytes long", size);
     }
     return OK;
 }
@@ -1782,8 +1782,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/developer/modguide
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

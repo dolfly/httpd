@@ -15,7 +15,7 @@
 <link href="../images/favicon.ico" rel="shortcut icon" /></head>
 <body>
 <div id="page-header">
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
 <p class="apache">Apache HTTP Server Version 2.5</p>
 <img alt="" src="../images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div>
@@ -333,7 +333,11 @@ Alias /myapp /opt/myapp-1.2.3
                   been determined by the server at the time
                   <code>REQUEST_FILENAME</code> is referenced. Otherwise,
                   such as when used in virtual host context, the same
-                  value as <code>REQUEST_URI</code>.</dd>
+                  value as <code>REQUEST_URI</code>.  Depending on the value of 
+                  <code class="directive"><a href="../mod/core.html#acceptpathinfo">AcceptPathInfo</a></code>, the
+                  server may have only used some leading components of the 
+                  <code>REQUEST_URI</code> to map the request to a file.
+                  </dd>
 
                   <dt><code>HTTPS</code></dt>
 
@@ -353,9 +357,11 @@ Alias /myapp /opt/myapp-1.2.3
         </li>
       </ul>
 
-      <p>If the <em>TestString</em> has the special value <code>expr</code>, the
-      <em>CondPattern</em> will be treated as an
-      <a href="../expr.html">ap_expr</a>.</p>
+      <p>If the <em>TestString</em> has the special value <code>expr</code>,
+      the <em>CondPattern</em> will be treated as an
+      <a href="../expr.html">ap_expr</a>. HTTP headers referenced in the
+      expression will be added to the Vary header if the <code>novary</code>
+      flag is not given.</p>
 
       <p>Other things you should be aware of:</p>
 
@@ -724,8 +730,8 @@ RewriteRule  ^/$                 /homepage.std.html  [L]
       all. It does not even update the <code>SCRIPT_URx</code>
       environment variables.</p>
 
-      <p>Use this directive to disable the module instead of
-      commenting out all the <code class="directive"><a href="#rewriterule">RewriteRule</a></code> directives!</p>
+      <p>Use this directive to disable rules in a particular contact,
+      rather than commenting out all the <code class="directive"><a href="#rewriterule">RewriteRule</a></code> directives.</p>
 
       <p>Note that rewrite configurations are not
       inherited by virtual hosts. This means that you need to have a
@@ -747,8 +753,6 @@ RewriteRule  ^/$                 /homepage.std.html  [L]
 <tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config, virtual host</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Extension</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>mod_rewrite</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td>The choice of different dbm types is available in
-Apache HTTP Server 2.0.41 and later</td></tr>
 </table>
       <p>The <code class="directive">RewriteMap</code> directive defines a
       <em>Rewriting Map</em> which can be used inside rule
@@ -839,8 +843,6 @@ Apache HTTP Server 2.0.41 and later</td></tr>
 <tr><th><a href="directive-dict.html#Override">Override:</a></th><td>FileInfo</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Extension</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>mod_rewrite</td></tr>
-<tr><th><a href="directive-dict.html#Compatibility">Compatibility:</a></th><td><code>MaxRedirects</code> is no longer available in version 2.1 and
-later</td></tr>
 </table>
 
       <p>The <code class="directive">RewriteOptions</code> directive sets some
@@ -924,6 +926,14 @@ later</td></tr>
       </div>
       </dd>
 
+      <dt><code>MergeBase</code></dt>
+      <dd>
+
+      <p>With this option, the value of <code class="directive"><a href="#rewritebase">RewriteBase</a></code> is copied from where it's explicitly defined
+      into any sub-directory or sub-location that doesn't define its own
+      <code class="directive"><a href="#rewritebase">RewriteBase</a></code>. Available in 
+      Apache HTTP Server 2.5 and later only.</p>
+      </dd>
       </dl>
 
 
@@ -1051,7 +1061,9 @@ cannot use <code>$N</code> in the substitution string!
         you specify a <em>Substitution</em> string of
         <code>/www/file.html</code>, then this will be treated as a
         URL-path <em>unless</em> a directory named <code>www</code>
-        exists at the root or your file-system, in which case it will
+        exists at the root or your file-system (or, in the case of 
+        using rewrites in a <code>.htaccess</code> file, relative to
+        your document root), in which case it will
         be treated as a file-system path. If you wish other
         URL-mapping directives (such as <code class="directive"><a href="../mod/mod_alias.html#alias">Alias</a></code>) to be applied to the
         resulting URL-path, use the <code>[PT]</code> flag as
@@ -1181,7 +1193,7 @@ cannot use <code>$N</code> in the substitution string!
         <td>last|L</td>
         <td>Stop the rewriting process immediately and don't apply any
         more rules. Especially note caveats for per-directory and
-        .htaccess context (see also the END flag). <em><a href="../rewrite/flags.html#flag_l">details ...</a></em></td>
+        .htaccess context (see also the END flag). <em><a href="../rewrite/flags.html#flag_end">details ...</a></em></td>
     </tr>
     <tr>
         <td>next|N</td>
@@ -1344,7 +1356,7 @@ directive.</p>
 
       <p><strong>Inside per-directory configuration for
       <code>/somepath</code><br />
-       (<code>/physical/path/to/somepath/.htacccess</code>, with
+       (<code>/physical/path/to/somepath/.htaccess</code>, with
       <code>RewriteBase /somepath</code>)<br />
        for request ``<code>GET
       /somepath/localpath/pathinfo</code>'':</strong><br />
@@ -1444,8 +1456,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/mod/mod_rewrite.ht
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

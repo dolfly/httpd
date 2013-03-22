@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE modulesynopsis SYSTEM "../style/modulesynopsis.dtd">
 <?xml-stylesheet type="text/xsl" href="../style/manual.fr.xsl"?>
-<!-- English Revision : 1330964 -->
+<!-- English Revision : 1439106 -->
 <!-- French translation : Lucien GENTIS -->
 <!-- Reviewed by : Vincent Deffontaines -->
 
@@ -432,23 +432,25 @@ URL</var>]</syntax>
     &ecirc;tre activ&eacute;e.</p>
 
     <highlight language="config">
-# Mise en cache de contenu
+# Mise en cache de contenu (gestionnaire normal seulement)
+CacheQuickHandler off
 &lt;Location /foo&gt;
     CacheEnable disk
 &lt;/Location&gt;
 
-# Mise en cache via une expression rationnelle
+# Mise en cache via une expression rationnelle (gestionnaire normal seulement)
+CacheQuickHandler off
 &lt;LocationMatch foo$&gt;
     CacheEnable disk
 &lt;/LocationMatch&gt;
 
-# Mise en cache des URLs mandat&eacute;es
+# Mise en cache des URLs mandat&eacute;es (gestionnaire normal ou rapide)
 CacheEnable  disk  /
 
-# Mise en cache des URLs FTP mandat&eacute;es
+# Mise en cache des URLs FTP mandat&eacute;es (gestionnaire normal ou rapide)
 CacheEnable  disk  ftp://
 
-# Mise en cache des contenus situ&eacute;s dans www.example.org
+# Mise en cache des contenus situ&eacute;s dans www.example.org (gestionnaire normal ou rapide)
 CacheEnable  disk  http://www.example.org/
     </highlight>
 
@@ -943,20 +945,24 @@ l'ent&ecirc;te Cache-Control: a pour valeur no-store.</description>
 <default>CacheLock off</default>
 <contextlist><context>server config</context><context>virtual host</context>
 </contextlist>
-<compatibility>Disponible depuis la version 2.2.15 d'Apache</compatibility>
 
 <usage>
   <p>La directive <directive>CacheLock</directive> active la protection
   contre les temp&ecirc;tes de requ&ecirc;tes pour l'espace d'adressage donn&eacute;.</p>
 
   <p>La configuration minimale pour activer le verrouillage contre les
-  temp&ecirc;tes de requ&ecirc;tes dans le r&eacute;pertoire temp par d&eacute;faut du syst&egrave;me est
+  temp&ecirc;tes de requ&ecirc;tes dans le r&eacute;pertoire par
+  d&eacute;faut des fichiers run-time est
   la suivante :</p>
 
   <highlight language="config">
 # Active le verrouillage du cache
 CacheLock on
   </highlight>
+
+  <p>Les verrous sont des fichiers vides qui n'existent que pour les
+  URLs pr&eacute;sentes dont le contenu est p&eacute;rim&eacute; ; ils consomment dont bien
+  moins de ressources que le cache disque traditionnel.</p>
 
 </usage>
 </directivesynopsis>
@@ -965,17 +971,16 @@ CacheLock on
 <name>CacheLockPath</name>
 <description>D&eacute;finit le r&eacute;pertoire des verrous.</description>
 <syntax>CacheLockPath <var>r&eacute;pertoire</var></syntax>
-<default>CacheLockPath /tmp/mod_cache-lock</default>
+<default>CacheLockPath mod_cache-lock</default>
 <contextlist><context>server config</context><context>virtual host</context>
 </contextlist>
 
 <usage>
   <p>La directive <directive>CacheLockPath</directive> permet de
-  sp&eacute;cifier le r&eacute;pertoire dans lequel les verrous sont cr&eacute;&eacute;s. Par
-  d&eacute;faut, c'est le r&eacute;pertoire temporaire du syst&egrave;me qui est utilis&eacute;. Les
-  verrous sont des fichiers vides qui n'existent que pour les URLs
-  p&eacute;rim&eacute;es en cours de mise &agrave; jour, et consomment donc bien moins de
-  ressources que le traditionnel cache sur disque.</p>
+  sp&eacute;cifier le r&eacute;pertoire dans lequel les verrous sont
+  cr&eacute;&eacute;s. Si <var>r&eacute;pertoire</var> n'est pas un
+  chemin absolu, il sera relatif au r&eacute;pertoire d&eacute;fini par la directive
+  <directive module="core">DefaultRuntimeDir</directive>.</p>
 
 </usage>
 </directivesynopsis>

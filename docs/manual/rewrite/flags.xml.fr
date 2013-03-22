@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <!DOCTYPE manualpage SYSTEM "../style/manualpage.dtd">
 <?xml-stylesheet type="text/xsl" href="../style/manual.fr.xsl"?>
-<!-- English Revision: 1346288:1363392 (outdated) -->
+<!-- English Revision: 1446006:1458088 (outdated) -->
 <!-- French translation : Lucien GENTIS -->
 <!-- Reviewed by : Vincent Deffontaines -->
 
@@ -51,15 +51,14 @@ plusieurs drapeaux. Les drapeaux sont situ&eacute;s en fin de r&egrave;gle, ento
 de crochets, et s&eacute;par&eacute;s le cas &eacute;ch&eacute;ant par des virgules.</p>
 <highlight language="config">RewriteRule pattern target [Flag1,Flag2,Flag3]</highlight>
 
-<p>Les drapeaux ont tous une forme courte, comme <code>CO</code>, ainsi
-qu'une forme longue, comme <code>cookie</code>. Certains drapeaux
-peuvent avoir un ou plusieurs arguments. Les drapeaux sont insensibles &agrave;
-la casse.</p>
-
-<p>Chaque drapeau (&agrave; quelques exceptions pr&egrave;s) poss&egrave;de une forme longue et une forme courte. Bien que
+<p>Chaque drapeau (&agrave; quelques exceptions pr&egrave;s)
+poss&egrave;de une forme courte, comme <code>CO</code>, ainsi qu'une forme longue,
+comme <code>cookie</code>. Bien que
 la forme courte soit la plus couramment utilis&eacute;e, nous vous recommandons
 de vous familiariser avec les drapeaux sous leur forme longue, afin de
-bien m&eacute;moriser ce que chaque drapeau est suppos&eacute; faire.</p>
+bien m&eacute;moriser ce que chaque drapeau est suppos&eacute; faire.
+Certains drapeaux acceptent un ou plusieurs arguments. Les drapeaux ne
+sont pas sensibles à la casse.</p>
 
 <p>Les drapeaux qui modifient les m&eacute;tadonn&eacute;es associ&eacute;es &agrave; la requ&ecirc;te
 (T=, H=, E=) n'ont aucun effet dans un contexte de r&eacute;pertoire ou de
@@ -529,6 +528,16 @@ local.</p>
       fixe, ou ne permette pas au client de l'influencer induement.</p>
 </note>
 
+<note type="warning">
+      <title>Avertissement au sujet des performances</title>
+      <p>Utiliser ce drapeau fait intervenir <module>mod_proxy</module> sans la gestion des connexions
+      persistantes, ce qui signifie que vous obtiendrez des performances meilleurs si vous utilisez
+      <directive module="mod_proxy">ProxyPass</directive> ou <directive module="mod_proxy">ProxyPassMatch</directive>.</p>
+      <p>Ceci est du au fait que ce drapeau induit l'utilisation du worker par d&eacute;faut, qui
+      ne g&egrave;re pas la mise en commun des connexions.</p>
+      <p>Partout o&ugrave; cela est possible, pr&eacute;f&eacute;rez l'utilisation de ces directives.</p>
+</note>
+
 <p>Note: <module>mod_proxy</module> doit &ecirc;tre activ&eacute; pour pouvoir
 utiliser ce drapeau.</p>
 
@@ -668,7 +677,11 @@ avertissements 'Invalid URI in request'.
 <section id="flag_s"><title>S|skip</title>
 <p>Le drapeau [S] sert &agrave; sauter des r&egrave;gles que vous ne voulez pas voir
 ex&eacute;cuter. La syntaxe du drapeau [S] est [S=<em>N</em>], o&ugrave;
-<em>N</em> correspond au nombre de r&egrave;gles &agrave; sauter.
+<em>N</em> correspond au nombre de r&egrave;gles &agrave; sauter (sous
+r&eacute;serve que la r&egrave;gle <directive
+module="mod_rewrite">RewriteRule</directive> corresponde et qu'au moins
+une condition <directive module="mod_rewrite">RewriteCond</directive>
+pr&eacute;alable soit v&eacute;rifi&eacute;e). 
 Ceci peut s'interpr&eacute;ter comme une instruction
 <code>goto</code>  dans votre jeu de r&egrave;gles de r&eacute;&eacute;criture. Dans
 l'exemple suivant, nous ne voulons ex&eacute;cuter la r&egrave;gle <directive

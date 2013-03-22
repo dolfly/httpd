@@ -15,7 +15,7 @@
 <link href="../images/favicon.ico" rel="shortcut icon" /></head>
 <body>
 <div id="page-header">
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
 <p class="apache">Apache HTTP Server Version 2.5</p>
 <img alt="" src="../images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div>
@@ -216,8 +216,10 @@ Header merge Cache-Control no-store env=NO_STORE
 <div class="directive-section"><h2><a name="Header" id="Header">Header</a> <a name="header" id="header">Directive</a></h2>
 <table class="directive">
 <tr><th><a href="directive-dict.html#Description">Description:</a></th><td>Configure HTTP response headers</td></tr>
-<tr><th><a href="directive-dict.html#Syntax">Syntax:</a></th><td><code>Header [<var>condition</var>] add|append|echo|edit|merge|set|unset
-<var>header</var> [<var>value</var>] [early|env=[!]<var>variable</var>]</code></td></tr>
+<tr><th><a href="directive-dict.html#Syntax">Syntax:</a></th><td><code>Header [<var>condition</var>] add|append|echo|edit|edit*|merge|set|unset
+<var>header</var> [<var>value</var>] [<var>replacement</var>]
+[early|env=[!]<var>variable</var>]|expr=<var>expression</var>]
+</code></td></tr>
 <tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config, virtual host, directory, .htaccess</td></tr>
 <tr><th><a href="directive-dict.html#Override">Override:</a></th><td>FileInfo</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Extension</td></tr>
@@ -281,10 +283,15 @@ Header merge Cache-Control no-store env=NO_STORE
     <var>value</var> must be omitted.</dd>
 
     <dt><code>edit</code></dt>
+    <dt><code>edit*</code></dt>
     <dd>If this response header exists, its value is transformed according
     to a <a class="glossarylink" href="../glossary.html#regex" title="see glossary">regular expression</a>
     search-and-replace.  The <var>value</var> argument is a <a class="glossarylink" href="../glossary.html#regex" title="see glossary">regular expression</a>, and the <var>replacement</var>
-    is a replacement string, which may contain backreferences.</dd>
+    is a replacement string, which may contain backreferences.
+    The <code>edit</code> form will match and replace exactly once
+    in a header value, whereas the <code>edit*</code> form will replace
+    <em>every</em> instance of the search pattern if it appears more
+    than once.</dd>
 
     <dt><code>merge</code></dt>
     <dd>The response header is appended to any existing header of
@@ -334,10 +341,25 @@ Header merge Cache-Control no-store env=NO_STORE
         headers are sent on the wire. This is a measure of the duration
         of the request. The value is preceded by <code>D=</code>.
         The value is measured in microseconds.</td></tr>
-<tr class="odd"><td><code>%{VARNAME}e</code></td>
+<tr class="odd"><td><code>%l</code></td>
+        <td>The current load averages of the actual server itself. It is
+        designed to expose the values obtained by <code>getloadavg()</code>
+        and this represents the current load average, the 5 minute average, and
+        the 15 minute average. The value is preceded by <code>l=</code> with each
+        average separated by <code>/</code>.
+        </td></tr>
+<tr><td><code>%i</code></td>
+        <td>The current idle percentage of httpd (0 to 100) based on available
+        processes and threads. The value is preceded by <code>i=</code>.
+        </td></tr>
+<tr class="odd"><td><code>%b</code></td>
+        <td>The current busy percentage of httpd (0 to 100) based on available
+        processes and threads. The value is preceded by <code>b=</code>.
+        </td></tr>
+<tr><td><code>%{VARNAME}e</code></td>
         <td>The contents of the <a href="../env.html">environment
         variable</a> <code>VARNAME</code>.</td></tr>
-<tr><td><code>%{VARNAME}s</code></td>
+<tr class="odd"><td><code>%{VARNAME}s</code></td>
         <td>The contents of the <a href="mod_ssl.html#envvars">SSL environment
         variable</a> <code>VARNAME</code>, if <code class="module"><a href="../mod/mod_ssl.html">mod_ssl</a></code> is enabled.</td></tr>
 </table>
@@ -381,8 +403,10 @@ Header merge Cache-Control no-store env=NO_STORE
 <div class="directive-section"><h2><a name="RequestHeader" id="RequestHeader">RequestHeader</a> <a name="requestheader" id="requestheader">Directive</a></h2>
 <table class="directive">
 <tr><th><a href="directive-dict.html#Description">Description:</a></th><td>Configure HTTP request headers</td></tr>
-<tr><th><a href="directive-dict.html#Syntax">Syntax:</a></th><td><code>RequestHeader add|append|edit|edit*|merge|set|unset <var>header</var>
-[<var>value</var>] [<var>replacement</var>] [early|env=[!]<var>variable</var>]</code></td></tr>
+<tr><th><a href="directive-dict.html#Syntax">Syntax:</a></th><td><code>RequestHeader add|append|edit|edit*|merge|set|unset
+<var>header</var> [<var>value</var>] [<var>replacement</var>]
+[early|env=[!]<var>variable</var>]|expr=<var>expression</var>]
+</code></td></tr>
 <tr><th><a href="directive-dict.html#Context">Context:</a></th><td>server config, virtual host, directory, .htaccess</td></tr>
 <tr><th><a href="directive-dict.html#Override">Override:</a></th><td>FileInfo</td></tr>
 <tr><th><a href="directive-dict.html#Status">Status:</a></th><td>Extension</td></tr>
@@ -501,8 +525,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/mod/mod_headers.ht
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

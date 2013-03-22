@@ -1,47 +1,136 @@
                                                          -*- coding: utf-8 -*-
 Changes with Apache 2.5.0
+ 
+  *) mod_cache_disk: CacheMinFileSize and CacheMaxFileSize were always
+     using compiled in defaults of 1000000/1 respectively. [Eric Covener]
 
-  *) mod_proxy: Fix memory leak or possible corruption in ProxyBlock
-     implementation.  [Ruediger Pluem, Joe Orton]
+  *) mod_ldap: LDAP connections used for authentication were not respecting
+     LDAPConnectionPoolTimeout.  PR 54587
 
-  *) mod_proxy: Check hostname from request URI against ProxyBlock list,
-     not forward proxy, if ProxyRemote* is configured.  [Joe Orton]
+  *) mod_ssl: Quiet FIPS mode weak keys disabled and FIPS not selected emits
+     in the error log to debug level.  [William Rowe]
 
-  *) mod_proxy_connect: Avoid DNS lookup on hostname from request URI 
-     if ProxyRemote* is configured.  PR 43697.  [Joe Orton]
+  *) core: ap_rgetline_core now pulls from r->proto_input_filters.
 
-  *) mod_lbmethod_heartbeat, mod_heartmonitor: Respect DefaultRuntimeDir/
-     DEFAULT_REL_RUNTIMEDIR for the heartbeat storage file.  [Jeff Trawick]
+  *) mod_proxy_html: process parsed comments immediately. 
+     Fixes bug where parsed comments may be lost. [Nick Kew]
 
-  *) mpm_event: Don't count connections in lingering close state when
-     calculating how many additional connections may be accepted.
+  *) mod_proxy_html: introduce doctype for HTML 5 [Nick Kew]
+
+  *) mod_proxy_html: fix typo-bug processing "strict" vs "transitional"
+     HTML/XHTML [Nick Kew]
+
+  *) core: Fix valgrind warning about uninitialized memory in argument to
+     semctl. PR 53690. [Mikhail T. <mi+apache aldan algebra com>]
+
+  *) core: Add option to add valgrind support. Use it to reduce false positive
+     warnings in mod_ssl. [Stefan Fritsch]
+
+  *) mod_lua: Add bindings for apr_dbd/mod_dbd database access
+     [Daniel Gruno]
+
+  *) mod_authn_file, mod_authn_dbd, mod_authn_dbm, mod_authn_socache:
+     Cache the result of the most recent password hash verification for every
+     keep-alive connection. This saves some expensive calculations.
      [Stefan Fritsch]
 
+  *) http: Remove support for Request-Range header sent by Navigator 2-3 and
+     MSIE 3. [Stefan Fritsch]
+
+  *) core, http: Extend HttpProtocol with an option to enforce stricter HTTP
+     conformance or to only log the found problems. [Stefan Fritsch]
+
+  *) core: Correctly parse an IPv6 literal host specification in an absolute
+     URL in the request line. [Stefan Fritsch]
+
+  *) mod_ssl: add support for subjectAltName-based host name checking
+     in proxy mode. PR 54030. [Kaspar Brand]
+
+  *) mpm_event: Check that AsyncRequestWorkerFactor is not negative. PR 54254.
+     [Jackie Zhang <jackie qq zhang gmail com>]
+
+  *) mod_ssl: Add support for OpenSSL configuration commands [Stephen Henson]
+
+  *) EventOpt MPM
+
+  *) core: Add LogLevelOverride directive that allows to override the
+     loglevel for clients from certain IPs. This also works for things
+     like the SSL handshake where <If> LogLevel ... </If> is evaluated
+     too late. [Stefan Fritsch]
+
+  *) core: Add new directive Warning to issue warnings from a configuration
+     file. Both Warning and Error now generate a timestamped log message.
+     [Fabien Coelho] 
+
+  *) ap_expr: Add SERVER_PROTOCOL_VERSION, ..._MAJOR, and ..._MINOR
+     variables. [Stefan Fritsch]
+
+  *) core: New directive RegisterHttpMethod for registering non-standard
+     HTTP methods. [Stefan Fritsch]
+
+  *) core: New directive HttpProtocol which allows to disable HTTP/0.9
+     support. [Stefan Fritsch]
+
+  *) mod_allowhandlers: New module to forbid specific handlers for specific
+     directories. [Stefan Fritsch]
+
+  *) configure: Fix processing of --disable-FEATURE for various features.
+     [Jeff Trawick]
+
+  *) mod_systemd: New module, for integration with systemd on Linux.
+     [Jan Kaluza <jkaluza redhat.com>]
+
+  *) mod_cache_socache: New cache implementation backed by mod_socache
+     that replaces mod_mem_cache removed from httpd v2.2. [Graham
+     Leggett]
+
+  *) core: Add dirwalk_stat and pre_htaccess hooks, allowing mpm-itk
+     to be used without patches to httpd core.  [Jeff Trawick]
+
+  *) mod_lua: Add LuaInputFilter/LuaOutputFilter for creating content
+     filters in Lua [Daniel Gruno]
+
+  *) WinNT MPM: Store pid and generation for each thread in scoreboard
+     to allow tracking of threads from exiting children via mod_status
+     or other such mechanisms.  [Jeff Trawick]
+
+  *) mod_ssl: Catch missing or mismatched client cert/key pairs with
+     SSLProxyMachineCertificateFile/Path directives.  PR 52212.  
+     [Keith Burdis <keith burdis.org>, Joe Orton]
+
+  *) mod_lua: Allow scripts handled by the lua-script handler to return 
+     a status code to the client (such as a 302 or a 500) [Daniel Gruno]
+
+  *) mod_lua: Decline handling 'lua-script' if the file doesn't exist,
+     rather than throwing an internal server error. [Daniel Gruno]
+
+  *) mod_lua: Add functions r:flush and r:sendfile as well as additional
+     request information to the request_rec structure. [Daniel Gruno]
+
+  *) mod_lua: Add a server scope for Lua states, which creates a pool of
+     states with managable minimum and maximum size. [Daniel Gruno]
+
+  *) core: Add post_perdir_config hook.
+     [Steinar Gunderson <sgunderson bigfoot.com>]
+
+  *) mod_lua: Add new directive, LuaMapHandler, for dynamically mapping 
+     URIs to Lua scripts and functions using regular expressions.
+     [Daniel Gruno]
+
+  *) mod_lua: Add new directive LuaCodeCache for controlling in-memory
+     caching of lua scripts. [Daniel Gruno]
+
+  *) The following now respect DefaultRuntimeDir/DEFAULT_REL_RUNTIMEDIR:
+     - APIs: ap_log_pid(), ap_remove_pid, ap_read_pid()
+     - core: the scoreboard (ScoreBoardFile), pid file (PidFile), and
+       mutexes (Mutex)
+     - mod_cache: thundering herd lock directory
+     - mod_lbmethod_heartbeat, mod_heartmonitor: heartbeat storage file
+     - mod_ldap: shared memory cache
+     - mod_socache_shmcb, mod_socache_dbm: shared memory or dbm for cache
+     [Jeff Trawick]
+
   *) mod_ssl: Add RFC 5878 support. [Ben Laurie]
-
-  *) mod_lua: Add new directive LuaAuthzProvider to allow implementing an
-     authorization provider in lua. [Stefan Fritsch]
-
-  *) mod_lua: Add a few missing request_rec fields. Rename remote_ip to
-     client_ip to match conn_rec. [Stefan Fritsch]
-
-  *) mod_lua: Change prototype of vm_construct, to work around gcc bug which
-     causes a segfault. PR 52779. [Dick Snippe <Dick Snippe tech omroep nl>]
-
-  *) mod_ssl: If exiting during initialization because of a fatal error,
-     log a message to the main error log pointing to the appropriate
-     virtual host error log. [Stefan Fritsch]
-
-  *) mod_ssl: Add support for TLS-SRP (Secure Remote Password key exchange
-     for TLS, RFC 5054). PR 51075. [Quinn Slack <sqs cs stanford edu>,
-     Christophe Renou, Peter Sylvester]
-
-  *) mod_ssl: Add new directive SSLCompression to disable TLS-level
-     compression. PR 53219. [Björn Jacke <bjoern j3e de>, Stefan Fritsch]
-
-  *) core: Make ap_regcomp() return AP_REG_ESPACE if out of memory.  Make
-     ap_pregcomp() abort if out of memory. This raises the minimum PCRE
-     requirement to version 6.0. PR 53284. [Stefan Fritsch]
 
   *) suexec: Add --enable-suexec-capabilites support on Linux, to use
      setuid/setgid capability bits rather than a setuid root binary.
@@ -51,15 +140,8 @@ Changes with Apache 2.5.0
      to a file; configure --without-suexec-logfile --with-suexec-syslog.  
      [Joe Orton]
 
-  *) mod_proxy_ajp: Reduce memory usage in case of many keep-alive requests on
-     one connection. PR 52275. [Naohiro Ooiwa <naohiro ooiwa miraclelinux com>]
-
   *) mod_ssl: Add support for TLS Next Protocol Negotiation.  PR 52210.
      [Matthew Steele <mdsteele google.com>]
-
-  *) various modules, rotatelogs: Replace use of apr_file_write() with
-     apr_file_write_full() to prevent incomplete writes. PR 53131.
-     [Nicolas Viennot <apache viennot biz>, Stefan Fritsch]
 
   *) cross-compile: allow to provide CC_FOR_BUILD so that gen_test_char will
      be compiled by the build compiler instead of the host compiler.
@@ -69,10 +151,6 @@ Changes with Apache 2.5.0
   *) core: In maintainer mode, replace apr_palloc with a version that
      initializes the allocated memory with non-zero values, except if
      AP_DEBUG_NO_ALLOC_POISON is defined. [Stefan Fritsch]
-
-  *) mod_authnz_ldap: Don't try a potentially expensive nested groups
-     search before exhausting all AuthLDAPGroupAttribute checks on the
-     current group. PR52464 [Eric Covener]
 
   *) mod_policy: Add a new testing module to help server administrators
      enforce a configurable level of protocol compliance on their

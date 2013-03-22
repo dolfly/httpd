@@ -15,7 +15,7 @@
 <link href="../images/favicon.ico" rel="shortcut icon" /></head>
 <body>
 <div id="page-header">
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p>
 <p class="apache">Apache HTTP Server Version 2.5</p>
 <img alt="" src="../images/feather.gif" /></div>
 <div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div>
@@ -274,7 +274,7 @@ sections.</td></tr>
 <tr><th><a href="directive-dict.html#Module">Module:</a></th><td>mod_authz_core</td></tr>
 </table>
     <p>When authorization is enabled, it is normally inherited by each
-    subsequent <a href="../sections.html#mergin">configuration section</a>,
+    subsequent <a href="../sections.html#merging">configuration section</a>,
     unless a different set of authorization directives are specified.
     This is the default action, which corresponds to an explicit setting
     of <code>AuthMerging Off</code>.</p>
@@ -491,7 +491,7 @@ Require group admin
 
     <p>When multiple <code class="directive">Require</code> directives are
     used in a single
-    <a href="../sections.html#mergin">configuration section</a>
+    <a href="../sections.html#merging">configuration section</a>
     and are not contained in another authorization directive like
     <code class="directive"><a href="#requireall">&lt;RequireAll&gt;</a></code>,
     they are implicitly contained within a
@@ -500,10 +500,21 @@ Require group admin
     entire request, and subsequent <code class="directive">Require</code> directives
     are ignored.</p>
 
+    <div class="warning"><h3>Security Warning</h3>
+    <p>Exercise caution when setting authorization directives in
+    <code class="directive"><a href="../mod/core.html#location">Location</a></code> sections
+    that overlap with content served out of the filesystem.  
+    By default, these <a href="../sections.html#merging">configuration sections</a> overwrite authorization configuration
+    in <code class="directive"><a href="../mod/core.html#directory">Directory</a></code>,  
+    and <code class="directive"><a href="../mod/core.html#files">Files</a></code> sections.</p>
+    <p>The <code class="directive"><a href="#authmerging">AuthMerging</a></code> directive 
+    can be used to control how authorization configuration sections are 
+    merged.</p>
+    </div>
+
 <h3>See also</h3>
 <ul>
-<li><a href="../howto/auth.html">Authentication, Authorization,
-    and Access Control</a></li>
+<li><a href="../howto/access.html">Access Control howto</a></li>
 <li><a href="#logic">Authorization Containers</a></li>
 <li><code class="module"><a href="../mod/mod_authn_core.html">mod_authn_core</a></code></li>
 <li><code class="module"><a href="../mod/mod_authz_host.html">mod_authz_host</a></code></li>
@@ -644,8 +655,8 @@ var comments_identifier = 'http://httpd.apache.org/docs/trunk/mod/mod_authz_core
     }
 })(window, document);
 //--><!]]></script></div><div id="footer">
-<p class="apache">Copyright 2012 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
-<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/directives.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
+<p class="apache">Copyright 2013 The Apache Software Foundation.<br />Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.</p>
+<p class="menu"><a href="../mod/">Modules</a> | <a href="../mod/quickreference.html">Directives</a> | <a href="http://wiki.apache.org/httpd/FAQ">FAQ</a> | <a href="../glossary.html">Glossary</a> | <a href="../sitemap.html">Sitemap</a></p></div><script type="text/javascript"><!--//--><![CDATA[//><!--
 if (typeof(prettyPrint) !== 'undefined') {
     prettyPrint();
 }

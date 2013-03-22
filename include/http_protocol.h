@@ -222,7 +222,7 @@ AP_DECLARE(apr_size_t) ap_send_mmap(apr_mmap_t *mm,
  *
  * @param p        The pool to create registered method numbers from.
  * @param methname The name of the new method to register.
- * @return         Ab int value representing an offset into a bitmask.
+ * @return         An int value representing an offset into a bitmask.
  */
 AP_DECLARE(int) ap_method_register(apr_pool_t *p, const char *methname);
 
@@ -379,7 +379,7 @@ AP_DECLARE_NONSTD(int) ap_rprintf(request_rec *r, const char *fmt,...)
 /**
  * Flush all of the data for the current request to the client
  * @param r The current request
- * @return The number of bytes sent
+ * @return 0 on success, -1 if an error occurred
  */
 AP_DECLARE(int) ap_rflush(request_rec *r);
 
